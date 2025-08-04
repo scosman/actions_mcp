@@ -1,31 +1,9 @@
 # ActionsMCP Configuration File for use with the actions-mcp repo!
 
-# Required: Actions array - each item becomes an MCP tool
 actions:
   - name: "all_tests"
     description: "Run all tests in the project"
     command: "python -m pytest ./tests/"
-    
-  - name: "test_file"
-    description: "Run tests in a specific file"
-    command: "python -m pytest $TEST_PATH"
-    parameters:
-      - name: "TEST_PATH"
-        type: "project_file_path"
-        description: "Path to test file or directory"
-        default: "./tests"
-    
-  - name: "test_specific"
-    description: "Run a specific test by name"
-    command: "python -m pytest $TEST_PATH -k $TEST_NAME"
-    parameters:
-      - name: "TEST_PATH"
-        type: "project_file_path"
-        description: "Path to test file or directory"
-        default: "./tests"
-      - name: "TEST_NAME"
-        type: "insecure_string"
-        description: "Name of the test to run"
     
   - name: "lint"
     description: "Lint the source code, checking for errors and warnings"
@@ -46,3 +24,47 @@ actions:
   - name: "typecheck"
     description: "Typecheck the source code"
     command: "uv run pyright ."
+
+  - name: "test_file"
+    description: "Run tests in a specific file or directory"
+    command: "python -m pytest $TEST_PATH"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+
+  - name: "test_specific"
+    description: "Run a specific test by name"
+    command: "python -m pytest $TEST_PATH -k $TEST_NAME"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+        default: "./tests"
+      - name: "TEST_NAME"
+        type: "insecure_string"
+        description: "Name of the test to run"
+    
+  # Example: Command that requires an environment variable. MCP Server will fail to start if the environment variable is not set.
+  # - name: "deploy"
+  #   description: "Deploy the application (requires DEPLOY_KEY environment variable)"
+  #   command: "echo Deploying with key $DEPLOY_KEY"
+  #   parameters:
+  #     - name: "DEPLOY_KEY"
+  #       type: "required_env_var"
+  #       description: "Deployment key for the service"
+    
+  # # Example: Command with optional environment variable. MCP Server will start even if the environment variable is not set.
+  # - name: "build"
+  #   description: "Build the application"
+  #   command: "echo Building application with key $DEPLOY_KEY"
+  #   parameters:
+  #     - name: "DEPLOY_KEY"
+  #       type: "optional_env_var"
+  #       description: "Deployment key for the service"
+    
+  # # Example: Command that runs from a specific directory. Useful for mono-repos.
+  # - name: "docs_check"
+  #   description: "Check documentation"
+  #   command: "echo Checking documentation in the app/webserver directory"
+  #   run_path: "app/webserver"

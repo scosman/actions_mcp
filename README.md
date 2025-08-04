@@ -55,6 +55,8 @@ uvx actions-mcp ./tools/actions_mcp.yaml"
 
 The `actions_mcp.yaml` file defines the tools that will be exposed through the MCP server.
 
+See this project's [actions_mcp.yaml](./actions_mcp.yaml) as an example.
+
 ### Top-level Fields
 
 - `server_name` (optional): Name of the MCP server (default: "ActionsMCP")
