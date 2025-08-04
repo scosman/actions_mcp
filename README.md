@@ -1,6 +1,8 @@
 # ActionsMCP
 
-> Write one YAML file to give your coding agents MCP access to all your developer tools: linting, tests, formatting, typechecking, etc
+> Write a YAML file to give your coding agents MCP access to your dev-tools: linting, tests, formatting, typechecking, etc
+
+[![All Checks](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml)
 
 ## Benefits
 
