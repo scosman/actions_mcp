@@ -1,0 +1,48 @@
+# ActionsMCP Configuration File for use with the actions-mcp repo!
+
+# Required: Actions array - each item becomes an MCP tool
+actions:
+  - name: "all_tests"
+    description: "Run all tests in the project"
+    command: "python -m pytest ./tests/"
+    
+  - name: "test_file"
+    description: "Run tests in a specific file"
+    command: "python -m pytest $TEST_PATH"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+        default: "./tests"
+    
+  - name: "test_specific"
+    description: "Run a specific test by name"
+    command: "python -m pytest $TEST_PATH -k $TEST_NAME"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+        default: "./tests"
+      - name: "TEST_NAME"
+        type: "insecure_string"
+        description: "Name of the test to run"
+    
+  - name: "lint"
+    description: "Lint the source code, checking for errors and warnings"
+    command: "uvx ruff check --extend-select I,F401"
+
+  - name: "lint_fix"
+    description: "Lint the source code, fixing errors and warnings which it can fix. Not all errors can be fixed automatically."
+    command: "uvx ruff check --extend-select I,F401 --fix"
+
+  - name: "check_format"
+    description: "Check if the source code is formatted correctly"
+    command: "uvx ruff format --check ."
+
+  - name: "format"
+    description: "Format the source code"
+    command: "uvx ruff format ."
+    
+  - name: "typecheck"
+    description: "Typecheck the source code"
+    command: "uv run pyright ."
