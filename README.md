@@ -4,11 +4,11 @@
 
 ## Benefits
 
-1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents, and share it with your team. Kinda like package.json scripts or Github Actions workflows.
-2. **Tool discovery:** coding agents knows which dev-tools are available and the exact parameters they require. No more guessing CLI strings.
-3. **Improved security:** limit the list of the commands agents can run without approval, and extra validation of parameters agents generate (e.g. ensure a file path exists inside the project).
+1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents, and share it with your team. Similar to package.json scripts or Github Actions workflows.
+2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
+3. **Improved security:** limit the list of the commands agents can run without approval, and extra validation of the arguments agents generate (e.g. ensure a file path exists inside the project).
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **And more:** strip ANSI codes/control characters, `.env` file loading, define secrets without checking them in, etc
+5. **And More:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, etc
 
 ## Quick Start
 
@@ -108,7 +108,7 @@ The server will validate that `TEST_FILE` is within the project and exists.
 
 ### required_env_var
 
-These parameters must be set in the environment before starting the server. If they are not set, the server will error on startup asking the user to set the vars.
+These parameters must be set in the environment before starting the server. If they are not set, the server will fail on startup asking the user to set the variables.
 
 ```yaml
 - name: "deploy"
@@ -194,15 +194,17 @@ Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/c
 
 ## Security Features
 
+### Security Benefits
+
 ActionsMCP implements several security measures to help improve security of giving agents access to terminal commands:
 
-1. **Allow List of Commands**: Your agents can only run the commands you give it access to, not arbitrary terminal commands.
+1. **Allow List of Commands**: Your agents can only run the commands you give it access to in your `actions_mcp.yaml`, not arbitrary terminal commands.
 
-2. **Path parameter validation** All `project_file_path` parameters are validated to ensure they:
+2. **Path Parameter Validation** All `project_file_path` parameters are validated to ensure they:
    - Are within the project directory
    - Actually exist in the project
 
-2. **Environment Variable Controls**: 
+3. **Environment Variable Controls**: 
    - `required_env_var` and `optional_env_var` parameters are managed by the developer, not the coding assistant. This prevents coding assistants from accessing sensitive variables.
 
 3. **Safe Command Execution**:
@@ -214,11 +216,13 @@ ActionsMCP implements several security measures to help improve security of givi
 
 There are some risks to using ActionsMCP:
 
- - If your agent can edit your `action_mcp.yaml`, it can add commands which it can then run via MCP
- - If your agent can add code to your project and any of your actions will invoke aribrary code (like a test runner), the agent can use this pattern to run arbitrary code
- - ActionMCP main contain bugs or security issues
+1. If your agent can edit your `actions_mcp.yaml`, it can add commands which it can then run via MCP
+ 
+2. If your agent can add code to your project and any of your actions will invoke arbitrary code (like a test runner), the agent can use this pattern to run arbitrary code
 
-We don't promise it's perfect, but it's probably better than giving an agent unfettered terminal acccess. Running inside a container is always recommended for agents.
+3. ActionMCP may contain bugs or security issues
+
+We don't promise it's perfect, but it's probably better than giving an agent unfettered terminal access. Running inside a container is always recommended for agents.
 
 ## License
 
