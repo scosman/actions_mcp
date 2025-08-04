@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool
+from mcp.types import TextContent, Tool
 
 from .config import ActionsMCPConfig, ConfigError, ParameterType
 from .executor import CommandExecutor, ExecutionError
@@ -81,7 +81,7 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
         return tools
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         # Find the action by name
         action = next((a for a in ActionsMCP_config.actions if a.name == name), None)
         if not action:
@@ -99,7 +99,7 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
             if result["stderr"]:
                 output += f"Errors:\n{result['stderr']}\n"
 
-            return [{"type": "text", "text": output}]
+            return [TextContent(type="text", text=output)]
         except ExecutionError:
             raise
         except Exception as e:
