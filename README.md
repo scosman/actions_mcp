@@ -1,38 +1,47 @@
 # ActionsMCP
 
-ActionsMCP is an MCP (Model Context Protocol) server that exposes project-specific development tools (tests, linters, typecheckers, etc.) as standardized functions through a simple YAML configuration file. This allows coding assistants like Cursor, Windsurf, and others to discover and use your project's development tools without requiring manual approval for each command execution.
+> Write one YAML file to give your coding agents MCP access to all your developer tools: linting, tests, formatting, typechecking, etc
 
-## Features
+## Benefits
 
-- **Standardized Tool Access**: Expose your project's development tools to any MCP-compatible coding assistant
-- **Security Focused**: Path validation, environment variable controls, and safe command execution
-- **Flexible Configuration**: Define tools with parameters, default values, and execution paths
-- **Environment Variable Support**: Load from existing environment or `.env` files
-- **Smart Terminal Output**: Processes ANSI codes and control characters for clean responses
-- **Easy Deployment**: Install and run with `uvx` for immediate use
+1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents, and share it with your team. Kinda like package.json scripts or Github Actions workflows.
+2. **Tool discovery:** coding agents knows which dev-tools are available and the exact parameters they require. No more guessing CLI strings.
+3. **Improved security:** limit the list of the commands agents can run without approval, and extra validation of parameters agents generate (e.g. ensure a file path exists inside the project).
+4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
+5. **And more:** strip ANSI codes/control characters, `.env` file loading, define secrets without checking them in, etc
 
 ## Quick Start
 
-1. Install with uv:
-   ```bash
-   uv tool install actions-mcp
-   ```
+1. Install with [uv](https://docs.astral.sh/uv/concepts/tools/):
 
-2. Create an `actions_mcp.yaml` file in your project root:
-   ```yaml
-   actions:
-     - name: "all_tests"
-       description: "Run all tests in the project"
-       command: "python -m pytest tests/"
-       
-     - name: "lint"
-       description: "Lint the source code"
-       command: "flake8 src/"
-       
-     - name: "typecheck"
-       description: "Typecheck the source code"
-       command: "mypy src/"
-   ```
+```bash
+uv tool install actions-mcp
+```
+
+2. Create an [`actions_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools. For example:
+
+```yaml
+actions:
+  - name: "all_tests"
+    description: "Run all tests in the project"
+    command: "uv run python -m pytest ./tests"
+    
+  - name: "check_format"
+    description: "Check if the source code is formatted correctly"
+    command: "uvx ruff format --check ."
+    
+  - name: "typecheck"
+    description: "Typecheck the source code"
+    command: "uv run pyright ."
+
+  - name: "test_file"
+    description: "Run tests in a specific file or directory"
+    command: "python -m pytest $TEST_PATH"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+```
 
 3. Run the server:
 
@@ -41,15 +50,7 @@ From your project path:
 uvx actions-mcp
 ```
 
-From another path:
-```bash
-uvx actions-mcp --working-directory "/Path/to/your/project"
-```
-
-With a non-default config file name or path:
-```bash
-uvx actions-mcp ./tools/actions_mcp.yaml"
-```
+See [running ActionsMCP](#running-actionsmcp) for more runtime options.
 
 ## Configuration File Specification
 
@@ -107,7 +108,7 @@ The server will validate that `TEST_FILE` is within the project and exists.
 
 ### required_env_var
 
-These parameters must be set in the environment before starting the server:
+These parameters must be set in the environment before starting the server. If they are not set, the server will error on startup asking the user to set the vars.
 
 ```yaml
 - name: "deploy"
@@ -119,7 +120,7 @@ These parameters must be set in the environment before starting the server:
       description: "Deployment key for the service"
 ```
 
-If `DEPLOY_KEY` is not set in the environment, the server will fail to start with a clear error message.
+ActionMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
 
 ### optional_env_var
 
@@ -137,7 +138,7 @@ Similar to `required_env_var` but optional:
 
 ### insecure_string
 
-Allows any string input from the coding assistant. Use with caution:
+Allows any string input from the coding assistant without validation. Use with caution:
 
 ```yaml
 - name: "grep_code"
@@ -149,102 +150,75 @@ Allows any string input from the coding assistant. Use with caution:
       description: "Pattern to search for"
 ```
 
-## Running with Coding Assistants
+## Running ActionsMCP
 
-### Cursor
+We recommend running ActionsMCP with [uvx](https://docs.astral.sh/uv/concepts/tools/):
 
-1. Open your project in Cursor
-2. Go to Settings → Models → MCP Servers
-3. Add a new server with the command: `uvx actions-mcp`
-4. The coding assistant will now have access to your project's tools
+```bash
+# Install
+uv tool install actions-mcp
+# Run
+uvx actions-mcp 
+```
 
-### Windsurf
+Optional command line arguments include:
+ - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
+ - The last argument is the path to the `actions_mcp.yaml` file, if not using the default `./actions_mcp.yaml`
 
-1. Open your project in Windsurf
-2. Configure the MCP server to run: `uvx actions-mcp`
-3. Use the tools directly from the coding assistant interface
+### Running with Coding Assistants
+
+#### Cursor
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=ActionsMCP&config=eyJjb21tYW5kIjoidXZ4IGFjdGlvbnMtbWNwIC0td29ya2luZy1kaXJlY3RvcnkgLiJ9)
+
+Or open this [cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=ActionsMCP&config=eyJjb21tYW5kIjoidXZ4IGFjdGlvbnMtbWNwIC0td29ya2luZy1kaXJlY3RvcnkgLiJ9).
+
+#### Windsurf/VSCode/etc
+
+Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server-to-your-workspace). Create an entry for ActionMCP.
+
+**Note:** Be sure it's run from the root of your project, or manually pass the working directory on startup:
+
+```json
+{
+  "ActionsMCP": {
+    "command": "uvx",
+    "args": [
+      "actions-mcp",
+      "--working-directory",
+      "."
+    ]
+  }
+}
+```
 
 ## Security Features
 
-ActionsMCP implements several security measures to protect your project:
+ActionsMCP implements several security measures to help improve security of giving agents access to terminal commands:
 
-1. **Path Validation**: All `project_file_path` parameters are validated to ensure they:
-   - Are within the project boundaries
-   - Don't contain directory traversal sequences (`..`, `~`, `$HOME`)
+1. **Allow List of Commands**: Your agents can only run the commands you give it access to, not arbitrary terminal commands.
+
+2. **Path parameter validation** All `project_file_path` parameters are validated to ensure they:
+   - Are within the project directory
    - Actually exist in the project
 
 2. **Environment Variable Controls**: 
-   - `required_env_var` and `optional_env_var` parameters are managed by the developer, not the coding assistant
-   - This prevents coding assistants from accessing sensitive variables
+   - `required_env_var` and `optional_env_var` parameters are managed by the developer, not the coding assistant. This prevents coding assistants from accessing sensitive variables.
 
 3. **Safe Command Execution**:
-   - Uses `subprocess.run` with `shell=False` to prevent shell injection
+   - Uses Python `subprocess.run` with `shell=False` to prevent shell injection
    - Uses `shlex.split` to properly separate command arguments
    - Implements timeouts to prevent infinite running commands
 
-4. **Insecure String Warnings**:
-   - Documents the risks of using `insecure_string` parameters
-   - Encourages developers to use more secure parameter types when possible
+### Security Risks
 
-## Example Configuration
+There are some risks to using ActionsMCP:
 
-Here's a comprehensive example showing all features:
+ - If your agent can edit your `action_mcp.yaml`, it can add commands which it can then run via MCP
+ - If your agent can add code to your project and any of your actions will invoke aribrary code (like a test runner), the agent can use this pattern to run arbitrary code
+ - ActionMCP main contain bugs or security issues
 
-```yaml
-server_name: "MyProject Tools"
-server_description: "Development tools for MyProject"
-
-
-actions:
-  # Run all tests
-  - name: "all_tests"
-    description: "Run all tests in the project"
-    command: "python -m pytest tests/"
-    
-  # Run specific tests with a file path parameter
-  - name: "test_file"
-    description: "Run tests in a specific file"
-    command: "python -m pytest $TEST_FILE"
-    parameters:
-      - name: "TEST_FILE"
-        type: "project_file_path"
-        description: "Path to test file"
-        default: "./tests"
-    
-  # Lint with optional flags
-  - name: "lint"
-    description: "Lint the source code"
-    command: "flake8 $LINT_FLAGS src/"
-    parameters:
-      - name: "LINT_FLAGS"
-        type: "insecure_string"
-        description: "Additional flake8 flags"
-        default: ""
-    run_path: "src"
-    
-  # Typecheck that requires an API key
-  - name: "typecheck"
-    description: "Typecheck the source code"
-    command: "mypy src/"
-    parameters:
-      - name: "MYPY_CACHE_DIR"
-        type: "optional_env_var"
-        description: "Custom cache directory for mypy"
-```
-
-## Development
-
-To run tests:
-
-```bash
-uv run python -m unittest discover tests
-```
-
-To run the server locally:
-
-```bash
-uv run python -m actions_mcp.server
-```
+We don't promise it's perfect, but it's probably better than giving an agent unfettered terminal acccess. Running inside a container is always recommended for agents.
 
 ## License
 
