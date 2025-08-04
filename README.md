@@ -224,6 +224,10 @@ There are some risks to using ActionsMCP:
 
 We don't promise it's perfect, but it's probably better than giving an agent unfettered terminal access. Running inside a container is always recommended for agents.
 
+## Origin Story
+
+I built this for my own use building [Kiln](https://getkiln.ai). It's primarily written by Qwen-Coder-405b.
+
 ## License
 
 MIT

@@ -3,7 +3,7 @@
 actions:
   - name: "all_tests"
     description: "Run all tests in the project"
-    command: "python -m pytest ./tests/"
+    command: "uv run python -m pytest ./tests/"
     
   - name: "lint"
     description: "Lint the source code, checking for errors and warnings"
@@ -27,7 +27,7 @@ actions:
 
   - name: "test_file"
     description: "Run tests in a specific file or directory"
-    command: "python -m pytest $TEST_PATH"
+    command: "uv run python -m pytest $TEST_PATH"
     parameters:
       - name: "TEST_PATH"
         type: "project_file_path"
@@ -35,7 +35,7 @@ actions:
 
   - name: "test_specific"
     description: "Run a specific test by name"
-    command: "python -m pytest $TEST_PATH -k $TEST_NAME"
+    command: "uv run python -m pytest $TEST_PATH -k $TEST_NAME"
     parameters:
       - name: "TEST_PATH"
         type: "project_file_path"
