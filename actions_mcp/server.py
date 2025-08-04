@@ -126,9 +126,21 @@ def main() -> None:
         default="./actions_mcp.yaml",
         help="Path to the ActionsMCP configuration file (default: ./actions_mcp.yaml)"
     )
-    
+    parser.add_argument(
+        "-wd", "--working-directory",
+        help="Working directory to use for the server (default: current directory)"
+    )
+
     args = parser.parse_args()
     
+    # Change working directory if specified
+    if args.working_directory:
+        try:
+            os.chdir(args.working_directory)
+        except Exception as e:
+            print(f"ActionsMCP Error: Failed to change working directory to '{args.working_directory}': {str(e)}")
+            sys.exit(1)
+
     # Load configuration
     config_path = Path(args.config_path)
     if not config_path.exists():
