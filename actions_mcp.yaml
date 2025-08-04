@@ -1,0 +1,78 @@
+# ActionsMCP Configuration File
+# This file defines development tools that can be exposed to coding assistants via MCP
+
+# Optional: Server name and description
+server_name: "Project Development Tools"
+server_description: "Standardized development tools for this project"
+
+# Optional: Project root directory (relative to this config file)
+# project_root: ".."
+
+# Required: Actions array - each item becomes an MCP tool
+actions:
+  # Example 1: Run all tests
+  - name: "all_tests"
+    description: "Run all tests in the project"
+    command: "python -m pytest tests/"
+    
+  # Example 2: Run tests in a specific file
+  - name: "test_file"
+    description: "Run tests in a specific file"
+    command: "python -m pytest $TEST_PATH"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+        default: "./tests"
+    
+  # Example 3: Run a specific test
+  - name: "test_specific"
+    description: "Run a specific test by name"
+    command: "python -m pytest $TEST_PATH -k $TEST_NAME"
+    parameters:
+      - name: "TEST_PATH"
+        type: "project_file_path"
+        description: "Path to test file or directory"
+        default: "./tests"
+      - name: "TEST_NAME"
+        type: "insecure_string"
+        description: "Name of the test to run"
+    
+  # Example 4: Lint the code
+  - name: "lint"
+    description: "Lint the source code"
+    command: "flake8 src/"
+    
+  # Example 5: Typecheck the code
+  - name: "typecheck"
+    description: "Typecheck the source code"
+    command: "mypy src/"
+    
+  # Example 6: Run all checks (lint, typecheck, tests)
+  - name: "all_checks"
+    description: "Run all code quality checks"
+    command: "python -m pytest tests/ && flake8 src/ && mypy src/"
+    
+  # Example 7: Command that requires an environment variable
+  - name: "deploy"
+    description: "Deploy the application (requires DEPLOY_KEY environment variable)"
+    command: "echo Deploying with key $DEPLOY_KEY"
+    parameters:
+      - name: "DEPLOY_KEY"
+        type: "required_env_var"
+        description: "Deployment key for the service"
+    
+  # Example 8: Command with optional environment variable
+  - name: "build"
+    description: "Build the application"
+    command: "echo Building application"
+    parameters:
+      - name: "VERBOSE"
+        type: "optional_env_var"
+        description: "Enable verbose output"
+    
+  # Example 9: Command that runs from a specific directory
+  - name: "docs_check"
+    description: "Check documentation"
+    command: "echo Checking documentation in current directory"
+    run_path: "docs"
