@@ -23,7 +23,8 @@ class TestSecurity:
         (self.project_root / "src").mkdir()
         (self.project_root / "src" / "main.py").touch()
         
-        self.executor = CommandExecutor(self.project_root)
+        self.executor = CommandExecutor()
+        self.executor.project_root = self.project_root
         
         # This will run after each test
         yield

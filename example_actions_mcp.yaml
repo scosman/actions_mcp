@@ -5,9 +5,6 @@
 server_name: "Project Development Tools"
 server_description: "Standardized development tools for this project"
 
-# Optional: Project root directory (relative to this config file)
-# project_root: ".."
-
 # Required: Actions array - each item becomes an MCP tool
 actions:
   # Example 1: Run all tests
@@ -41,7 +38,7 @@ actions:
   # Example 4: Lint the code
   - name: "lint"
     description: "Lint the source code"
-    command: "flake8 src/"
+    command: "ruff check src/"
     
   # Example 5: Typecheck the code
   - name: "typecheck"
@@ -51,7 +48,7 @@ actions:
   # Example 6: Run all checks (lint, typecheck, tests)
   - name: "all_checks"
     description: "Run all code quality checks"
-    command: "python -m pytest tests/ && flake8 src/ && mypy src/"
+    command: "python -m pytest tests/ && ruff check src/ && mypy src/"
     
   # Example 7: Command that requires an environment variable
   - name: "deploy"

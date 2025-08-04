@@ -35,9 +35,21 @@ ActionsMCP is an MCP (Model Context Protocol) server that exposes project-specif
    ```
 
 3. Run the server:
-   ```bash
-   uvx actions-mcp
-   ```
+
+From your project path:
+```bash
+uvx actions-mcp
+```
+
+From another path:
+```bash
+uvx actions-mcp --working-directory "/Path/to/your/project"
+```
+
+With a non-default config file name or path:
+```bash
+uvx actions-mcp ./tools/actions_mcp.yaml"
+```
 
 ## Configuration File Specification
 
@@ -47,7 +59,6 @@ The `actions_mcp.yaml` file defines the tools that will be exposed through the M
 
 - `server_name` (optional): Name of the MCP server (default: "ActionsMCP")
 - `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
-- `project_root` (optional): Relative path to the project root from the config file location
 - `actions` (required): Array of action definitions
 
 ### Action Fields
@@ -56,9 +67,9 @@ Each action in the `actions` array can have the following fields:
 
 - `name` (required): Unique identifier for the tool
 - `description` (required): Human-readable description of what the tool does
-- `command` (required): The CLI command to execute
-- `run_path` (optional): Relative path from project root where the command should be executed
-- `parameters` (optional): Array of parameter definitions
+- `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
+- `parameters` (optional): Definitions of each parameter used in the command. 
+- `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
 
 ### Parameter Fields
 
@@ -181,8 +192,6 @@ Here's a comprehensive example showing all features:
 server_name: "MyProject Tools"
 server_description: "Development tools for MyProject"
 
-# If config file is in a subdirectory, specify project root
-project_root: ".."
 
 actions:
   # Run all tests

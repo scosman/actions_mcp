@@ -27,7 +27,6 @@ actions:
         
         assert config.server_name == "ActionsMCP"
         assert config.server_description == "Project-specific development tools exposed via MCP"
-        assert config.project_root is None
         assert len(config.actions) == 1
         
         action = config.actions[0]
@@ -42,7 +41,6 @@ actions:
         yaml_content = """
 server_name: "MyProjectTools"
 server_description: "Development tools for MyProject"
-project_root: ".."
 
 actions:
   - name: "all_tests"
@@ -91,7 +89,6 @@ actions:
         
         assert config.server_name == "MyProjectTools"
         assert config.server_description == "Development tools for MyProject"
-        assert config.project_root == ".."
         assert len(config.actions) == 4
         
         # Check first action

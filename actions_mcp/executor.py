@@ -2,8 +2,8 @@ import subprocess
 import os
 import shlex
 from pathlib import Path
-from typing import Dict, Any, Optional, List
-from .config import Action, ParameterType, ConfigError
+from typing import Dict, Any, List
+from .config import Action, ParameterType
 from .utils import validate_project_path, process_terminal_output
 
 
@@ -15,8 +15,8 @@ class ExecutionError(Exception):
 class CommandExecutor:
     """Handles secure execution of commands defined in ActionsMCP configuration."""
     
-    def __init__(self, project_root: Path):
-        self.project_root = project_root
+    def __init__(self):
+        self.project_root = Path(os.getcwd())
     
     def execute_action(self, action: Action, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -86,22 +86,3 @@ def validate_project_path(path: str, project_root: Path) -> bool:
     except ValueError:
         # Path is not within project root
         return False
-
-
-def get_project_root(config_path: Path, project_root_setting: Optional[str]) -> Path:
-    """
-    Determine the project root directory based on config path and setting.
-    
-    Args:
-        config_path: Path to the configuration file
-        project_root_setting: Optional project_root setting from config
-        
-    Returns:
-        Path to the project root directory
-    """
-    if project_root_setting:
-        # Use the project_root setting from config
-        return (config_path.parent / project_root_setting).resolve()
-    else:
-        # Default to the directory containing the config file
-        return config_path.parent.resolve()

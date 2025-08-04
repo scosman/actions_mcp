@@ -1,7 +1,6 @@
 import os
 import yaml
 from typing import List, Dict, Any, Optional
-from pathlib import Path
 
 
 class ConfigError(Exception):
@@ -89,11 +88,10 @@ class Action:
 class ActionsMCPConfig:
     """Main configuration class for ActionsMCP."""
     def __init__(self, actions: List[Action], server_name: Optional[str] = None, 
-                 server_description: Optional[str] = None, project_root: Optional[str] = None):
+                 server_description: Optional[str] = None):
         self.actions = actions
         self.server_name = server_name or "ActionsMCP"
         self.server_description = server_description or "Project-specific development tools exposed via MCP"
-        self.project_root = project_root
 
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'ActionsMCPConfig':
@@ -135,8 +133,7 @@ class ActionsMCPConfig:
         return cls(
             actions=actions,
             server_name=data.get("server_name"),
-            server_description=data.get("server_description"),
-            project_root=data.get("project_root")
+            server_description=data.get("server_description")
         )
 
     def validate_required_env_vars(self) -> List[str]:

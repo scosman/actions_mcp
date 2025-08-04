@@ -56,14 +56,11 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
     Args:
         ActionsMCP_config: The ActionsMCP configuration
     """
-    # Get project root
-    project_root = Path(os.getcwd())
-    
     # Create tool definitions
     tools = create_tool_definitions(ActionsMCP_config)
     
     # Create command executor
-    executor = CommandExecutor(project_root)
+    executor = CommandExecutor()
     
     # Create MCP server
     server = Server(ActionsMCP_config.server_name)
