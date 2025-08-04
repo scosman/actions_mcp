@@ -1,6 +1,7 @@
 import os
+from typing import Any, Dict, List, Optional
+
 import yaml
-from typing import List, Dict, Any, Optional
 
 
 class ConfigError(Exception):

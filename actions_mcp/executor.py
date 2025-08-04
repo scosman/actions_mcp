@@ -1,10 +1,11 @@
-import subprocess
 import os
 import shlex
+import subprocess
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict
+
 from .config import Action, ParameterType
-from .utils import validate_project_path, process_terminal_output
+from .utils import process_terminal_output, validate_project_path
 
 
 class ExecutionError(Exception):

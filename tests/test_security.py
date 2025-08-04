@@ -1,10 +1,11 @@
-import os
 import tempfile
-import pytest
 from pathlib import Path
-from actions_mcp.utils import validate_project_path
+
+import pytest
+
 from actions_mcp.config import Action, ActionParameter, ParameterType
 from actions_mcp.executor import CommandExecutor, ExecutionError
+from actions_mcp.utils import validate_project_path
 
 
 class TestSecurity:
