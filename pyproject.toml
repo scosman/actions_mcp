@@ -3,7 +3,7 @@ name = "actions-mcp"
 version = "0.1.0"
 description = "MCP server that exposes project-specific development tools (tests, linters, etc.) via YAML configuration"
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Steve Cosman" }
 ]
 dependencies = [
     "mcp>=1.0.0",
