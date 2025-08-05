@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .config import Action, ParameterType
-from .utils import process_terminal_output, validate_project_path
+from .utils import process_terminal_output, resolve_path, validate_project_path
 
 
 class ExecutionError(Exception):
@@ -165,7 +165,7 @@ class CommandExecutor:
                     )
 
                 # Check if file exists for project_file_path parameters
-                full_path = self.project_root / value
+                full_path = resolve_path(value, self.project_root)
                 if not full_path.exists():
                     raise ExecutionError(
                         f"ActionsMCP Error: Path '{value}' for parameter '{param.name}' in action '{action.name}' does not exist"

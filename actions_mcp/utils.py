@@ -47,6 +47,22 @@ def process_terminal_output(text: str) -> str:
     return "\n".join(processed_lines).strip()
 
 
+def resolve_path(path: str, project_root: Path) -> Path:
+    """
+    Resolve a path to its canonical form.
+    """
+    # Convert to Path object
+    untrusted_path = Path(path)
+
+    # If the path is absolute, resolve it directly
+    if untrusted_path.is_absolute():
+        return untrusted_path.resolve()
+    else:
+        # If the path is relative, resolve it relative to the project root
+        # This is crucial for security - we want relative paths to be relative to project root
+        return (project_root / untrusted_path).resolve()
+
+
 def validate_project_path(path: str, project_root: Path) -> bool:
     """
     Validate that a path is within the project boundaries and doesn't
@@ -86,18 +102,9 @@ def validate_project_path(path: str, project_root: Path) -> bool:
         # Expand environment variables ($HOME, ${VAR}, etc.)
         expanded_path = os.path.expandvars(expanded_path)
 
-        # Convert to Path object
-        untrusted_path = Path(expanded_path)
+        # Convert to respoved path
+        candidate_path = resolve_path(expanded_path, canonical_project_root)
 
-        # If the path is absolute, resolve it directly
-        if untrusted_path.is_absolute():
-            candidate_path = untrusted_path.resolve()
-        else:
-            # If the path is relative, resolve it relative to the project root
-            # This is crucial for security - we want relative paths to be relative to project root
-            candidate_path = (canonical_project_root / untrusted_path).resolve()
-
-        # Check if the resolved candidate path is within the canonical project root
         # Use is_relative_to() if available (Python 3.9+), otherwise use relative_to()
         if hasattr(candidate_path, "is_relative_to"):
             return candidate_path.is_relative_to(canonical_project_root)
