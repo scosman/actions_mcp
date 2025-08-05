@@ -60,7 +60,7 @@ actions:
 uvx hooks-mcp
 ```
 
-See [running HooksMCP](#running-hooksmcp) for more runtime options.
+See [running HooksMCP](#running-hooksmcp) for more runtime options, including how to run in Cursor, Windsurf, etc.
 
 ## Configuration File Specification
 
