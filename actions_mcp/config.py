@@ -56,12 +56,14 @@ class Action:
         command: str,
         parameters: Optional[List[ActionParameter]] = None,
         run_path: Optional[str] = None,
+        timeout: int = 60,
     ):
         self.name = name
         self.description = description
         self.command = command
         self.parameters = parameters or []
         self.run_path = run_path
+        self.timeout = timeout
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Action":
@@ -113,7 +115,14 @@ class Action:
                     )
                 )
 
-        return cls(name, description, command, parameters, data.get("run_path"))
+        return cls(
+            name,
+            description,
+            command,
+            parameters,
+            data.get("run_path"),
+            data.get("timeout", 60),
+        )
 
 
 class ActionsMCPConfig:

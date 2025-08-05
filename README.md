@@ -75,6 +75,7 @@ Each action in the `actions` array can have the following fields:
 - `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
 - `parameters` (optional): Definitions of each parameter used in the command. 
 - `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
+- `timeout` (optional): Timeout in seconds for command execution (default: 60 seconds)
 
 ### Parameter Fields
 

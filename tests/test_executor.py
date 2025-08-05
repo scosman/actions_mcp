@@ -284,16 +284,16 @@ class TestExecutor:
 
     def test_execute_command_with_required_env_var_substitution(self):
         """Test that required_env_var parameters get substituted in commands.
-        
-        This test demonstrates a bug: env vars are not substituted because the 
+
+        This test demonstrates a bug: env vars are not substituted because the
         substitution line is commented out and env vars are skipped in the loop.
         """
         import os
-        
+
         # Set up environment variable
         original_value = os.environ.get("TEST_MESSAGE")
         os.environ["TEST_MESSAGE"] = "Hello from env var"
-        
+
         try:
             action = Action(
                 name="echo_env_var",
@@ -301,9 +301,9 @@ class TestExecutor:
                 command="echo $TEST_MESSAGE",
                 parameters=[
                     ActionParameter(
-                        "TEST_MESSAGE", 
-                        ParameterType.REQUIRED_ENV_VAR, 
-                        "Test message from environment"
+                        "TEST_MESSAGE",
+                        ParameterType.REQUIRED_ENV_VAR,
+                        "Test message from environment",
                     )
                 ],
             )
@@ -315,10 +315,42 @@ class TestExecutor:
             assert "Hello from env var" in result["stdout"]
             # This assertion shows what actually happens - literal $TEST_MESSAGE
             assert "$TEST_MESSAGE" not in result["stdout"]
-            
+
         finally:
             # Clean up environment
             if original_value is None:
                 os.environ.pop("TEST_MESSAGE", None)
             else:
                 os.environ["TEST_MESSAGE"] = original_value
+
+    def test_execute_command_with_timeout(self):
+        """Test that the timeout parameter is respected."""
+        # Create an action with a short timeout (1 second)
+        action = Action(
+            name="sleep_test",
+            description="Sleep test",
+            command="sleep 5",  # This will take longer than the timeout
+            timeout=1,  # 1 second timeout
+        )
+
+        # Execute the action and expect a timeout error
+        with pytest.raises(ExecutionError) as context:
+            self.executor.execute_action(action, {})
+
+        # Verify the error message contains the correct timeout value
+        assert "timed out after 1 seconds" in str(context.value)
+
+    def test_execute_command_with_default_timeout(self):
+        """Test that the default timeout is used when not specified."""
+        # Create an action without specifying timeout (should default to 60 seconds)
+        action = Action(
+            name="sleep_test_default",
+            description="Sleep test with default timeout",
+            command="sleep 1",  # This will complete within the default timeout
+        )
+
+        # Execute the action - it should complete successfully
+        result = self.executor.execute_action(action, {})
+
+        assert result["status_code"] == 0
+        assert result["stderr"] == ""

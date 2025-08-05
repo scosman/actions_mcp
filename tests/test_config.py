@@ -255,3 +255,42 @@ actions:
 
         # Clean up
         del os.environ["API_KEY"]
+
+    def test_config_with_timeout(self):
+        """Test parsing a configuration with timeout parameter."""
+        yaml_content = """
+actions:
+  - name: "test_with_timeout"
+    description: "Test action with custom timeout"
+    command: "sleep 10"
+    timeout: 30
+    
+  - name: "test_without_timeout"
+    description: "Test action without timeout"
+    command: "echo Hello"
+"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(yaml_content)
+            f.flush()
+
+            config = ActionsMCPConfig.from_yaml(f.name)
+
+            # Clean up
+            Path(f.name).unlink()
+
+        assert len(config.actions) == 2
+
+        # Check action with timeout
+        action1 = config.actions[0]
+        assert action1.name == "test_with_timeout"
+        assert action1.description == "Test action with custom timeout"
+        assert action1.command == "sleep 10"
+        assert action1.timeout == 30
+
+        # Check action without timeout (should use default)
+        action2 = config.actions[1]
+        assert action2.name == "test_without_timeout"
+        assert action2.description == "Test action without timeout"
+        assert action2.command == "echo Hello"
+        assert action2.timeout == 60  # Default timeout

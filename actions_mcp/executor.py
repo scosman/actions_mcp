@@ -60,7 +60,7 @@ class CommandExecutor:
                 env={**os.environ, **env_vars},
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout
+                timeout=action.timeout,
                 shell=False,
             )
 
@@ -71,7 +71,7 @@ class CommandExecutor:
             }
         except subprocess.TimeoutExpired:
             raise ExecutionError(
-                f"ActionsMCP Error: Command for action '{action.name}' timed out after 5 minutes"
+                f"ActionsMCP Error: Command for action '{action.name}' timed out after {action.timeout} seconds"
             )
         except Exception as e:
             raise ExecutionError(
@@ -81,11 +81,11 @@ class CommandExecutor:
     def _substitute_parameters(self, command: str, env_vars: Dict[str, str]) -> list:
         """
         Parse command template and substitute parameter variables with their values.
-        
+
         Args:
             command: The command string containing $VARIABLE_NAME placeholders
             env_vars: Dictionary of variable names to values
-            
+
         Returns:
             List of command arguments with variables substituted
         """
@@ -94,11 +94,11 @@ class CommandExecutor:
             command_args = shlex.split(command)
         except ValueError as e:
             raise ExecutionError(f"ActionsMCP Error: Invalid command syntax: {e}")
-        
+
         # Sort parameter names by length (descending) to handle collisions
         # This ensures $PREFIX_SUFFIX is processed before $PREFIX
         sorted_params = sorted(env_vars.keys(), key=len, reverse=True)
-        
+
         # Substitute parameters in each argument
         substituted_args = []
         for arg in command_args:
@@ -111,7 +111,7 @@ class CommandExecutor:
                 # Replace all occurrences of $PARAM_NAME with the parameter value
                 substituted_arg = substituted_arg.replace(f"${param_name}", param_str)
             substituted_args.append(substituted_arg)
-            
+
         return substituted_args
 
     def _prepare_parameters(
