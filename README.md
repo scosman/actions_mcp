@@ -10,6 +10,10 @@
   All with one YAML file.
 </h3>
 
+<a href="https://glama.ai/mcp/servers/@scosman/actions_mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@scosman/actions_mcp/badge" alt="ActionsMCP MCP server" />
+</a>
+
 ## Overview
 
 1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents. Similar to package.json scripts or Github Actions workflows, but commands are triggered by MCP functions. Add the YAML to your repo to share with your team.
