@@ -1,3 +1,4 @@
+import os
 import re
 from pathlib import Path
 
@@ -89,7 +90,6 @@ def validate_project_path(path: str, project_root: Path) -> bool:
     Returns:
         True if path is valid and within project boundaries, False otherwise
     """
-    import os
 
     try:
         # Resolve the trusted project root to canonical absolute path
@@ -101,6 +101,12 @@ def validate_project_path(path: str, project_root: Path) -> bool:
         expanded_path = os.path.expanduser(path)
         # Expand environment variables ($HOME, ${VAR}, etc.)
         expanded_path = os.path.expandvars(expanded_path)
+
+        # Security check: If path still contains unexpanded environment variables,
+        # reject it to prevent treating them as relative paths within the project
+        # Look for patterns like $VAR or ${VAR} that indicate unexpanded variables
+        if re.search(r"\$[A-Za-z_][A-Za-z0-9_]*|\$\{[^}]*\}", expanded_path):
+            return False
 
         # Convert to respoved path
         candidate_path = resolve_path(expanded_path, canonical_project_root)
