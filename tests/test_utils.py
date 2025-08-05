@@ -1,4 +1,4 @@
-from actions_mcp.utils import process_terminal_output, strip_ansi_codes
+from hooks_mcp.utils import process_terminal_output, strip_ansi_codes
 
 
 class TestStripANSICodes:

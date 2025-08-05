@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from actions_mcp.config import Action, ActionParameter, ParameterType
-from actions_mcp.executor import CommandExecutor, ExecutionError
-from actions_mcp.utils import validate_project_path
+from hooks_mcp.config import Action, ActionParameter, ParameterType
+from hooks_mcp.executor import CommandExecutor, ExecutionError
+from hooks_mcp.utils import validate_project_path
 
 
 class TestSecurity:
-    """Test security features of ActionsMCP."""
+    """Test security features of HooksMCP."""
 
     @pytest.fixture(autouse=True)
     def setup_teardown(self):

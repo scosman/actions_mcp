@@ -1,5 +1,5 @@
 [project]
-name = "actions-mcp"
+name = "hooks-mcp"
 version = "0.1.0"
 description = "MCP server that exposes project-specific development tools (tests, linters, etc.) via YAML configuration"
 authors = [
@@ -11,7 +11,12 @@ dependencies = [
     "python-dotenv>=1.0.0",
 ]
 readme = "README.md"
+license = "MIT"
 requires-python = ">= 3.10"
+
+[project.urls]
+Homepage = "https://github.com/scosman/hooks_mcp"
+Repository = "https://github.com/scosman/hooks_mcp"
 
 [dependency-groups]
 dev = [
@@ -21,7 +26,7 @@ dev = [
 ]
 
 [project.scripts]
-actions-mcp = "actions_mcp.server:main"
+hooks-mcp = "hooks_mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]

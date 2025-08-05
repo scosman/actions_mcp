@@ -6,8 +6,8 @@ Test script to demonstrate potential security issues with parameter substitution
 import tempfile
 from pathlib import Path
 
-from actions_mcp.config import Action, ActionParameter, ParameterType
-from actions_mcp.executor import CommandExecutor
+from hooks_mcp.config import Action, ActionParameter, ParameterType
+from hooks_mcp.executor import CommandExecutor
 
 
 def test_parameter_name_collision():

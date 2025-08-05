@@ -15,7 +15,7 @@ class ExecutionError(Exception):
 
 
 class CommandExecutor:
-    """Handles secure execution of commands defined in ActionsMCP configuration."""
+    """Handles secure execution of commands defined in HooksMCP configuration."""
 
     def __init__(self):
         self.project_root = Path(os.getcwd())
@@ -46,7 +46,7 @@ class CommandExecutor:
             # Validate run_path is within project boundaries
             if not validate_project_path(action.run_path, self.project_root):
                 raise ExecutionError(
-                    f"ActionsMCP Error: Invalid run_path '{action.run_path}' for action '{action.name}'. "
+                    f"HooksMCP Error: Invalid run_path '{action.run_path}' for action '{action.name}'. "
                     f"Path must be within project boundaries and not contain directory traversal sequences."
                 )
 
@@ -71,11 +71,11 @@ class CommandExecutor:
             }
         except subprocess.TimeoutExpired:
             raise ExecutionError(
-                f"ActionsMCP Error: Command for action '{action.name}' timed out after {action.timeout} seconds"
+                f"HooksMCP Error: Command for action '{action.name}' timed out after {action.timeout} seconds"
             )
         except Exception as e:
             raise ExecutionError(
-                f"ActionsMCP Error: Failed to execute command for action '{action.name}': {str(e)}"
+                f"HooksMCP Error: Failed to execute command for action '{action.name}': {str(e)}"
             )
 
     def _substitute_parameters(self, command: str, env_vars: Dict[str, str]) -> list:
@@ -93,7 +93,7 @@ class CommandExecutor:
         try:
             command_args = shlex.split(command)
         except ValueError as e:
-            raise ExecutionError(f"ActionsMCP Error: Invalid command syntax: {e}")
+            raise ExecutionError(f"HooksMCP Error: Invalid command syntax: {e}")
 
         # Sort parameter names by length (descending) to handle collisions
         # This ensures $PREFIX_SUFFIX is processed before $PREFIX
@@ -142,7 +142,7 @@ class CommandExecutor:
                     env_vars[param.name] = env_value
                 elif param.type == ParameterType.REQUIRED_ENV_VAR:
                     raise ExecutionError(
-                        f"ActionsMCP Error: Required environment variable '{param.name}' not set for action '{action.name}'"
+                        f"HooksMCP Error: Required environment variable '{param.name}' not set for action '{action.name}'"
                     )
                 continue
 
@@ -154,13 +154,13 @@ class CommandExecutor:
                 # If no value and no default, it's required
                 if value is None:
                     raise ExecutionError(
-                        f"ActionsMCP Error: Required parameter '{param.name}' not provided for action '{action.name}'"
+                        f"HooksMCP Error: Required parameter '{param.name}' not provided for action '{action.name}'"
                     )
 
                 # Validate the path
                 if not validate_project_path(value, self.project_root):
                     raise ExecutionError(
-                        f"ActionsMCP Error: Invalid path '{value}' for parameter '{param.name}' in action '{action.name}'. "
+                        f"HooksMCP Error: Invalid path '{value}' for parameter '{param.name}' in action '{action.name}'. "
                         f"Path must be within project boundaries and not contain directory traversal sequences."
                     )
 
@@ -168,7 +168,7 @@ class CommandExecutor:
                 full_path = resolve_path(value, self.project_root)
                 if not full_path.exists():
                     raise ExecutionError(
-                        f"ActionsMCP Error: Path '{value}' for parameter '{param.name}' in action '{action.name}' does not exist"
+                        f"HooksMCP Error: Path '{value}' for parameter '{param.name}' in action '{action.name}' does not exist"
                     )
 
                 env_vars[param.name] = value
@@ -181,7 +181,7 @@ class CommandExecutor:
                 # If no value and no default, it's required
                 if value is None:
                     raise ExecutionError(
-                        f"ActionsMCP Error: Required parameter '{param.name}' not provided for action '{action.name}'"
+                        f"HooksMCP Error: Required parameter '{param.name}' not provided for action '{action.name}'"
                     )
 
                 # Convert to string if needed

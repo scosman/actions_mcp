@@ -1,1 +1,1 @@
-"""Test package for ActionsMCP."""
+"""Test package for HooksMCP."""
