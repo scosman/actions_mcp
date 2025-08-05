@@ -281,3 +281,44 @@ class TestExecutor:
         assert result["status_code"] == 0
         # The output should contain the full string "123 `echo 456`"
         assert "123 `echo 456`" in result["stdout"]
+
+    def test_execute_command_with_required_env_var_substitution(self):
+        """Test that required_env_var parameters get substituted in commands.
+        
+        This test demonstrates a bug: env vars are not substituted because the 
+        substitution line is commented out and env vars are skipped in the loop.
+        """
+        import os
+        
+        # Set up environment variable
+        original_value = os.environ.get("TEST_MESSAGE")
+        os.environ["TEST_MESSAGE"] = "Hello from env var"
+        
+        try:
+            action = Action(
+                name="echo_env_var",
+                description="Echo environment variable",
+                command="echo $TEST_MESSAGE",
+                parameters=[
+                    ActionParameter(
+                        "TEST_MESSAGE", 
+                        ParameterType.REQUIRED_ENV_VAR, 
+                        "Test message from environment"
+                    )
+                ],
+            )
+
+            result = self.executor.execute_action(action, {})
+
+            assert result["status_code"] == 0
+            # This should pass if env var substitution works, but will fail with current code
+            assert "Hello from env var" in result["stdout"]
+            # This assertion shows what actually happens - literal $TEST_MESSAGE
+            assert "$TEST_MESSAGE" not in result["stdout"]
+            
+        finally:
+            # Clean up environment
+            if original_value is None:
+                os.environ.pop("TEST_MESSAGE", None)
+            else:
+                os.environ["TEST_MESSAGE"] = original_value

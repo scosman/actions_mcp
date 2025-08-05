@@ -36,18 +36,8 @@ class CommandExecutor:
         # Validate and prepare parameters
         env_vars = self._prepare_parameters(action, parameters)
 
-        # Substitute parameters in command string
-        command = action.command
-        for param_name, param_value in env_vars.items():
-            # Only substitute parameters that are not required_env_var or optional_env_var
-            # These should already be available in the environment
-            if param_name not in [
-                p.name
-                for p in action.parameters
-                if p.type
-                in [ParameterType.REQUIRED_ENV_VAR, ParameterType.OPTIONAL_ENV_VAR]
-            ]:
-                command = command.replace(f"${param_name}", str(param_value))
+        # Parse command and substitute parameters in command args
+        command_args = self._substitute_parameters(action.command, env_vars)
 
         # Determine execution directory
         execution_dir = self.project_root
@@ -65,12 +55,13 @@ class CommandExecutor:
             # Use subprocess.run with shell=False for security
             # Pass environment variables separately to avoid shell injection
             result = subprocess.run(
-                shlex.split(command),
+                command_args,
                 cwd=execution_dir,
                 env={**os.environ, **env_vars},
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout
+                shell=False,
             )
 
             return {
@@ -86,6 +77,42 @@ class CommandExecutor:
             raise ExecutionError(
                 f"ActionsMCP Error: Failed to execute command for action '{action.name}': {str(e)}"
             )
+
+    def _substitute_parameters(self, command: str, env_vars: Dict[str, str]) -> list:
+        """
+        Parse command template and substitute parameter variables with their values.
+        
+        Args:
+            command: The command string containing $VARIABLE_NAME placeholders
+            env_vars: Dictionary of variable names to values
+            
+        Returns:
+            List of command arguments with variables substituted
+        """
+        # First parse the command template to understand shell syntax
+        try:
+            command_args = shlex.split(command)
+        except ValueError as e:
+            raise ExecutionError(f"ActionsMCP Error: Invalid command syntax: {e}")
+        
+        # Sort parameter names by length (descending) to handle collisions
+        # This ensures $PREFIX_SUFFIX is processed before $PREFIX
+        sorted_params = sorted(env_vars.keys(), key=len, reverse=True)
+        
+        # Substitute parameters in each argument
+        substituted_args = []
+        for arg in command_args:
+            substituted_arg = arg
+            for param_name in sorted_params:
+                param_value = env_vars[param_name]
+                # Convert parameter value to string for substitution
+                # Note: quoting is not necessary since we're in the context of a single arg, not a string command
+                param_str = str(param_value)
+                # Replace all occurrences of $PARAM_NAME with the parameter value
+                substituted_arg = substituted_arg.replace(f"${param_name}", param_str)
+            substituted_args.append(substituted_arg)
+            
+        return substituted_args
 
     def _prepare_parameters(
         self, action: Action, provided_parameters: Dict[str, Any]
