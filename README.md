@@ -1,6 +1,6 @@
 # ActionsMCP
 
-> Write a YAML file to give your coding agents MCP access to your dev-tools: linting, tests, formatting, typechecking, etc
+> One YAML file to give coding agents safe MCP access to linting, testing, formatting, and more
 
 [![All Checks](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml)
 
@@ -10,7 +10,7 @@
 2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
 3. **Improved security:** limit the list of the commands agents can run without approval, and extra validation of the arguments agents generate (e.g. ensure a file path exists inside the project).
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **And More:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, etc
+5. **And More:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 ## Quick Start
 
@@ -228,7 +228,7 @@ We don't promise it's perfect, but it's probably better than giving an agent unf
 
 ## Origin Story
 
-I built this for my own use building [Kiln](https://getkiln.ai). It's primarily written by Qwen-Coder-405b.
+I built this for my own use building [Kiln](https://getkiln.ai). The first draft was written by Qwen-Coder-405b, and then it was edited by me. See the [initial commit](https://github.com/scosman/actions_mcp/commit/62fdd5917a1469b64e9dbad73fd713cb0f2454a5) for the prompt.
 
 ## License
 
