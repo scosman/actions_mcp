@@ -15,6 +15,10 @@
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
 5. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
+<p align="center">
+<img width="293" height="299" alt="Screenshot 2025-08-05 at 12 08 20 AM" src="https://github.com/user-attachments/assets/b7352ab4-d212-45f0-8267-67bc7209eb5b" />
+</p>
+
 [![All Checks](https://github.com/scosman/hooks_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/hooks_mcp/actions/workflows/all-checks.yml)
 
 ## Quick Start
