@@ -4,16 +4,20 @@
   </picture>
 </p>
 <h3 align="center">
-  Give coding agents safe MCP access to linting, testing, formatting, and more. All with one YAML file.
+  Give coding agents MCP access to linting, testing, formatting, and more. 
+</h3>
+<h3 align="center">
+  All with one YAML file.
 </h3>
 
 ## Overview
 
-1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents. Similar to package.json scripts or Github Actions workflows, but commands run as MCP server functions. Add the YAML to your repo to share with your team.
+1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents. Similar to package.json scripts or Github Actions workflows, but commands are triggered by MCP functions. Add the YAML to your repo to share with your team.
 2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
-3. **Improved security:** limit the commands agents can run. Add extra validation of the arguments agents generate (e.g. ensure a file path is inside the project).
+3. **Improved security:** limit which commands agents can run. Validate the arguments agents generate (e.g. ensure a file path is inside the project).
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
+5. **Speed:** using MCP unlocks parallel execution, requires fewer tokens for generating commands, and eliminates errors in commands requiring iteration.
+6. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 <p align="center">
 <img width="293" height="299" alt="Screenshot 2025-08-05 at 12 08 20 AM" src="https://github.com/user-attachments/assets/b7352ab4-d212-45f0-8267-67bc7209eb5b" />
