@@ -8,7 +8,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from .config import ActionsMCPConfig, ConfigError, ParameterType, ActionParameter
+from .config import ActionParameter, ActionsMCPConfig, ConfigError, ParameterType
 from .executor import CommandExecutor, ExecutionError
 
 
