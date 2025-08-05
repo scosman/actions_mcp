@@ -179,3 +179,105 @@ class TestExecutor:
         # It should not contain "456" on a separate line
         assert "123 && echo 456" in result["stdout"]
         assert "456" not in result["stdout"].split("\n")
+
+    def test_execute_command_with_insecure_string_prevents_semicolon_injection(self):
+        """Test that insecure string parameters don't allow semicolon command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # Test semicolon command injection
+        result = self.executor.execute_action(action, {"MESSAGE": "123; echo 456"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123; echo 456" and not just "123"
+        # It should not contain "456" on a separate line
+        assert "123; echo 456" in result["stdout"]
+        assert "456" not in result["stdout"].split("\n")
+
+    def test_execute_command_with_insecure_string_prevents_pipe_injection(self):
+        """Test that insecure string parameters don't allow pipe command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # Test pipe command injection
+        result = self.executor.execute_action(action, {"MESSAGE": "123 | echo 456"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123 | echo 456"
+        assert "123 | echo 456" in result["stdout"]
+
+    def test_execute_command_with_insecure_string_prevents_redirect_injection(self):
+        """Test that insecure string parameters don't allow redirect command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # Test redirect command injection
+        result = self.executor.execute_action(action, {"MESSAGE": "123 > test.txt"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123 > test.txt"
+        assert "123 > test.txt" in result["stdout"]
+
+    def test_execute_command_with_insecure_string_prevents_subshell_injection(self):
+        """Test that insecure string parameters don't allow subshell command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # Test subshell command injection
+        result = self.executor.execute_action(action, {"MESSAGE": "123 $(echo 456)"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123 $(echo 456)"
+        assert "123 $(echo 456)" in result["stdout"]
+
+    def test_execute_command_with_insecure_string_prevents_backtick_injection(self):
+        """Test that insecure string parameters don't allow backtick command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # Test backtick command injection
+        result = self.executor.execute_action(action, {"MESSAGE": "123 `echo 456`"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123 `echo 456`"
+        assert "123 `echo 456`" in result["stdout"]
