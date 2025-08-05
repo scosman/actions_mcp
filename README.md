@@ -1,16 +1,21 @@
-# ActionsMCP
+<p align="center">
+        <picture>
+            <img width="310" height="65" alt="actionsMCP" src="https://github.com/user-attachments/assets/d5cddfe2-8a7f-4cfb-881f-efae085c35e9" />
+        </picture>
+</p>
+<h3 align="center">
+    One YAML file to give coding agents safe MCP access to linting, testing, formatting, and more
+</h3>
 
-> One YAML file to give coding agents safe MCP access to linting, testing, formatting, and more
+## Overview
+
+1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents. Similar to package.json scripts or Github Actions workflows, but commands run as MCP server functions. Add the YAML to your repo to share with your team.
+2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
+3. **Improved security:** limit the commands agents can run without approval. Add extra validation of the arguments agents generate (e.g. ensure a file path exists inside the project).
+4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
+5. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 [![All Checks](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml)
-
-## Benefits
-
-1. **Simple setup:** one YAML file is all it takes to create a custom MCP server for your coding agents, and share it with your team. Similar to package.json scripts or Github Actions workflows.
-2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
-3. **Improved security:** limit the list of the commands agents can run without approval, and extra validation of the arguments agents generate (e.g. ensure a file path exists inside the project).
-4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **And More:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 ## Quick Start
 
@@ -47,7 +52,6 @@ actions:
 
 3. Run the server:
 
-From your project path:
 ```bash
 uvx actions-mcp
 ```
@@ -81,10 +85,10 @@ Each action in the `actions` array can have the following fields:
 
 Each parameter in an action's `parameters` array can have the following fields:
 
-- `name` (required): Parameter name (used as environment variable name in commands)
+- `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
 - `type` (required): One of the following parameter types:
   - `project_file_path`: A local path within the project, relative to project root. Validated to ensure it's within project boundaries and exists.
-  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model.
+  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model. 
   - `optional_env_var`: An optional environment variable. Not specified by the calling model.
   - `insecure_string`: Any string from the model. No validation. Use with caution.
 - `description` (optional): Human-readable description of the parameter
