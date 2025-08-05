@@ -4,7 +4,7 @@
         </picture>
 </p>
 <h3 align="center">
-    One YAML file to give coding agents safe MCP access to linting, testing, formatting, and more
+    One YAML file gives coding agents safe MCP access to linting, testing, formatting and more
 </h3>
 
 ## Overview
