@@ -156,3 +156,26 @@ class TestExecutor:
             self.executor.execute_action(action, {})
 
         assert "Invalid run_path" in str(context.value)
+
+    def test_execute_command_with_insecure_string_prevents_command_injection(self):
+        """Test that insecure string parameters don't allow command injection."""
+        action = Action(
+            name="echo_insecure",
+            description="Echo insecure string",
+            command="echo $MESSAGE",
+            parameters=[
+                ActionParameter(
+                    "MESSAGE", ParameterType.INSECURE_STRING, "Message to echo"
+                )
+            ],
+        )
+
+        # This test checks that the command doesn't execute the second part of the string as a separate command
+        # If vulnerable to injection, this would execute both "echo 123" and "echo 456"
+        result = self.executor.execute_action(action, {"MESSAGE": "123 && echo 456"})
+
+        assert result["status_code"] == 0
+        # The output should contain the full string "123 && echo 456" and not just "123"
+        # It should not contain "456" on a separate line
+        assert "123 && echo 456" in result["stdout"]
+        assert "456" not in result["stdout"].split("\n")
