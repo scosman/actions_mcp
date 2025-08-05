@@ -1,10 +1,10 @@
 <p align="center">
-        <picture>
-            <img width="310" height="65" alt="actionsMCP" src="https://github.com/user-attachments/assets/d5cddfe2-8a7f-4cfb-881f-efae085c35e9" />
-        </picture>
+  <picture>
+      <img width="310" height="65" alt="HooksMCP" src="https://github.com/user-attachments/assets/d5cddfe2-8a7f-4cfb-881f-efae085c35e9" />
+  </picture>
 </p>
 <h3 align="center">
-    One YAML file gives coding agents safe MCP access to linting, testing, formatting and more
+  One YAML file gives coding agents safe MCP access to linting, testing, formatting and more
 </h3>
 
 ## Overview
@@ -15,17 +15,17 @@
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
 5. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
-[![All Checks](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/actions_mcp/actions/workflows/all-checks.yml)
+[![All Checks](https://github.com/scosman/hooks_mcp/actions/workflows/all-checks.yml/badge.svg)](https://github.com/scosman/hooks_mcp/actions/workflows/all-checks.yml)
 
 ## Quick Start
 
 1. Install with [uv](https://docs.astral.sh/uv/concepts/tools/):
 
 ```bash
-uv tool install actions-mcp
+uv tool install hooks-mcp
 ```
 
-2. Create an [`actions_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools. For example:
+2. Create an [`hooks_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools. For example:
 
 ```yaml
 actions:
@@ -53,20 +53,20 @@ actions:
 3. Run the server:
 
 ```bash
-uvx actions-mcp
+uvx hooks-mcp
 ```
 
-See [running ActionsMCP](#running-actionsmcp) for more runtime options.
+See [running HooksMCP](#running-hooksmcp) for more runtime options.
 
 ## Configuration File Specification
 
-The `actions_mcp.yaml` file defines the tools that will be exposed through the MCP server.
+The `hooks_mcp.yaml` file defines the tools that will be exposed through the MCP server.
 
-See this project's [actions_mcp.yaml](./actions_mcp.yaml) as an example.
+See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
 
 ### Top-level Fields
 
-- `server_name` (optional): Name of the MCP server (default: "ActionsMCP")
+- `server_name` (optional): Name of the MCP server (default: "HooksMCP")
 - `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
 - `actions` (required): Array of action definitions
 
@@ -127,7 +127,7 @@ These parameters must be set in the environment before starting the server. If t
       description: "Deployment key for the service"
 ```
 
-ActionMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
+HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
 
 ### optional_env_var
 
@@ -157,41 +157,41 @@ Allows any string input from the coding assistant without validation. Use with c
       description: "Pattern to search for"
 ```
 
-## Running ActionsMCP
+## Running HooksMCP
 
-We recommend running ActionsMCP with [uvx](https://docs.astral.sh/uv/concepts/tools/):
+We recommend running HooksMCP with [uvx](https://docs.astral.sh/uv/concepts/tools/):
 
 ```bash
 # Install
-uv tool install actions-mcp
+uv tool install hooks-mcp
 # Run
-uvx actions-mcp 
+uvx hooks-mcp 
 ```
 
 Optional command line arguments include:
  - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
- - The last argument is the path to the `actions_mcp.yaml` file, if not using the default `./actions_mcp.yaml`
+ - The last argument is the path to the `hooks_mcp.yaml` file, if not using the default `./hooks_mcp.yaml`
 
 ### Running with Coding Assistants
 
 #### Cursor
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=ActionsMCP&config=eyJjb21tYW5kIjoidXZ4IGFjdGlvbnMtbWNwIC0td29ya2luZy1kaXJlY3RvcnkgLiJ9)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ)
 
-Or open this [cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=ActionsMCP&config=eyJjb21tYW5kIjoidXZ4IGFjdGlvbnMtbWNwIC0td29ya2luZy1kaXJlY3RvcnkgLiJ9).
+Or open this [cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ).
 
 #### Windsurf/VSCode/etc
 
-Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server-to-your-workspace). Create an entry for ActionMCP.
+Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server-to-your-workspace). Create an entry for HooksMCP.
 
 **Note:** Be sure it's run from the root of your project, or manually pass the working directory on startup:
 
 ```json
 {
-  "ActionsMCP": {
+  "HooksMCP": {
     "command": "uvx",
     "args": [
-      "actions-mcp",
+      "hooks-mcp",
       "--working-directory",
       "."
     ]
@@ -203,9 +203,9 @@ Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/c
 
 ### Security Benefits
 
-ActionsMCP implements several security measures to help improve security of giving agents access to terminal commands:
+HooksMCP implements several security measures to help improve security of giving agents access to terminal commands:
 
-1. **Allow List of Commands**: Your agents can only run the commands you give it access to in your `actions_mcp.yaml`, not arbitrary terminal commands.
+1. **Allow List of Commands**: Your agents can only run the commands you give it access to in your `hooks_mcp.yaml`, not arbitrary terminal commands.
 
 2. **Path Parameter Validation** All `project_file_path` parameters are validated to ensure they:
    - Are within the project directory
@@ -221,19 +221,19 @@ ActionsMCP implements several security measures to help improve security of givi
 
 ### Security Risks
 
-There are some risks to using ActionsMCP:
+There are some risks to using HooksMCP:
 
-1. If your agent can edit your `actions_mcp.yaml`, it can add commands which it can then run via MCP
+1. If your agent can edit your `hooks_mcp.yaml`, it can add commands which it can then run via MCP
  
 2. If your agent can add code to your project and any of your actions will invoke arbitrary code (like a test runner), the agent can use this pattern to run arbitrary code
 
-3. ActionMCP may contain bugs or security issues
+3. HooksMCP may contain bugs or security issues
 
 We don't promise it's perfect, but it's probably better than giving an agent unfettered terminal access. Running inside a container is always recommended for agents.
 
 ## Origin Story
 
-I built this for my own use building [Kiln](https://getkiln.ai). The first draft was written by Qwen-Coder-405b, and then it was edited by me. See the [initial commit](https://github.com/scosman/actions_mcp/commit/62fdd5917a1469b64e9dbad73fd713cb0f2454a5) for the prompt.
+I built this for my own use building [Kiln](https://getkiln.ai). The first draft was written by Qwen-Coder-405b, and then it was edited by me. See the [initial commit](https://github.com/scosman/hooks_mcp/commit/62fdd5917a1469b64e9dbad73fd713cb0f2454a5) for the prompt.
 
 ## License
 

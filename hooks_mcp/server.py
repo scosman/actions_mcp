@@ -8,16 +8,16 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from .config import ActionParameter, ActionsMCPConfig, ConfigError, ParameterType
+from .config import ActionParameter, ConfigError, HooksMCPConfig, ParameterType
 from .executor import CommandExecutor, ExecutionError
 
 
-def create_tool_definitions(config: ActionsMCPConfig) -> List[Tool]:
+def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
     """
-    Create MCP tool definitions from the ActionsMCP configuration.
+    Create MCP tool definitions from the HooksMCP configuration.
 
     Args:
-        config: The ActionsMCP configuration
+        config: The HooksMCP configuration
 
     Returns:
         List of MCP Tool definitions
@@ -59,21 +59,21 @@ def create_tool_definitions(config: ActionsMCPConfig) -> List[Tool]:
     return tools
 
 
-async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
+async def serve(hooks_mcp_config: HooksMCPConfig) -> None:
     """
-    Run the ActionsMCP server.
+    Run the HooksMCP server.
 
     Args:
-        ActionsMCP_config: The ActionsMCP configuration
+        hooks_mcp_config: The HooksMCP configuration
     """
     # Create tool definitions
-    tools = create_tool_definitions(ActionsMCP_config)
+    tools = create_tool_definitions(hooks_mcp_config)
 
     # Create command executor
     executor = CommandExecutor()
 
     # Create MCP server
-    server = Server(ActionsMCP_config.server_name)
+    server = Server(hooks_mcp_config.server_name)
 
     # Register tools
     @server.list_tools()
@@ -83,9 +83,9 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
     @server.call_tool()
     async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         # Find the action by name
-        action = next((a for a in ActionsMCP_config.actions if a.name == name), None)
+        action = next((a for a in hooks_mcp_config.actions if a.name == name), None)
         if not action:
-            raise ExecutionError(f"ActionsMCP Error: Action '{name}' not found")
+            raise ExecutionError(f"HooksMCP Error: Action '{name}' not found")
 
         try:
             # Execute the action
@@ -104,7 +104,7 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
             raise
         except Exception as e:
             raise ExecutionError(
-                f"ActionsMCP Error: Unexpected error executing action '{name}': {str(e)}"
+                f"HooksMCP Error: Unexpected error executing action '{name}': {str(e)}"
             )
 
     # Set up server capabilities
@@ -120,15 +120,15 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
 
 
 def main() -> None:
-    """Main entry point for the ActionsMCP server."""
+    """Main entry point for the HooksMCP server."""
     parser = argparse.ArgumentParser(
-        description="ActionsMCP - MCP server for project-specific development tools"
+        description="HooksMCP - MCP server for project-specific development tools"
     )
     parser.add_argument(
         "config_path",
         nargs="?",
-        default="./actions_mcp.yaml",
-        help="Path to the ActionsMCP configuration file (default: ./actions_mcp.yaml)",
+        default="./hooks_mcp.yaml",
+        help="Path to the HooksMCP configuration file (default: ./hooks_mcp.yaml)",
     )
     parser.add_argument(
         "-wd",
@@ -144,18 +144,18 @@ def main() -> None:
             os.chdir(args.working_directory)
         except Exception as e:
             print(
-                f"ActionsMCP Error: Failed to change working directory to '{args.working_directory}': {str(e)}"
+                f"HooksMCP Error: Failed to change working directory to '{args.working_directory}': {str(e)}"
             )
             sys.exit(1)
 
     # Load configuration
     config_path = Path(args.config_path)
     if not config_path.exists():
-        print(f"ActionsMCP Error: Configuration file '{config_path}' not found")
+        print(f"HooksMCP Error: Configuration file '{config_path}' not found")
         sys.exit(1)
 
     try:
-        config = ActionsMCPConfig.from_yaml(str(config_path))
+        config = HooksMCPConfig.from_yaml(str(config_path))
     except ConfigError as e:
         print(str(e))
         sys.exit(1)
@@ -164,7 +164,7 @@ def main() -> None:
     missing_vars = config.validate_required_env_vars()
     if missing_vars:
         print(
-            f"ActionsMCP Error: Required environment variables not set: {', '.join(missing_vars)}"
+            f"HooksMCP Error: Required environment variables not set: {', '.join(missing_vars)}"
         )
         print("Please set these variables before running the server.")
         sys.exit(1)
@@ -182,10 +182,10 @@ def main() -> None:
 
         asyncio.run(serve(config))
     except KeyboardInterrupt:
-        print("ActionsMCP server stopped by user")
+        print("HooksMCP server stopped by user")
         sys.exit(0)
     except Exception as e:
-        print(f"ActionsMCP Error: Failed to start server: {str(e)}")
+        print(f"HooksMCP Error: Failed to start server: {str(e)}")
         sys.exit(1)
 
 

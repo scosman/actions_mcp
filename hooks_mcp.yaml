@@ -1,4 +1,4 @@
-# ActionsMCP Configuration File for use with the actions-mcp repo!
+# HooksMCP Configuration File for use with the hooks-mcp repo!
 
 actions:
   - name: "all_tests"

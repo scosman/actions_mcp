@@ -3,15 +3,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from actions_mcp.config import (
+from hooks_mcp.config import (
     Action,
     ActionParameter,
-    ActionsMCPConfig,
     ConfigError,
+    HooksMCPConfig,
     ParameterType,
 )
-from actions_mcp.executor import ExecutionError
-from actions_mcp.server import create_tool_definitions, main, serve
+from hooks_mcp.executor import ExecutionError
+from hooks_mcp.server import create_tool_definitions, main, serve
 
 
 class TestCreateToolDefinitions:
@@ -19,7 +19,7 @@ class TestCreateToolDefinitions:
 
     def test_empty_config(self):
         """Test creating tool definitions from empty config."""
-        config = ActionsMCPConfig(
+        config = HooksMCPConfig(
             server_name="TestServer", server_description="Test Description", actions=[]
         )
 
@@ -34,7 +34,7 @@ class TestCreateToolDefinitions:
             description="Test action description",
             command="echo hello",
         )
-        config = ActionsMCPConfig(
+        config = HooksMCPConfig(
             server_name="TestServer",
             server_description="Test Description",
             actions=[action],
@@ -67,7 +67,7 @@ class TestCreateToolDefinitions:
             command="echo $MESSAGE",
             parameters=parameters,
         )
-        config = ActionsMCPConfig(
+        config = HooksMCPConfig(
             server_name="TestServer",
             server_description="Test Description",
             actions=[action],
@@ -109,7 +109,7 @@ class TestCreateToolDefinitions:
             command="echo $MESSAGE",
             parameters=parameters,
         )
-        config = ActionsMCPConfig(
+        config = HooksMCPConfig(
             server_name="TestServer",
             server_description="Test Description",
             actions=[action],
@@ -144,7 +144,7 @@ class TestCreateToolDefinitions:
                 ActionParameter("PATH", ParameterType.PROJECT_FILE_PATH, "Path to list")
             ],
         )
-        config = ActionsMCPConfig(
+        config = HooksMCPConfig(
             server_name="TestServer",
             server_description="Test Description",
             actions=[action1, action2],
@@ -174,15 +174,15 @@ class TestServe:
         action = Action(
             name="test_action", description="Test action", command="echo hello"
         )
-        return ActionsMCPConfig(
+        return HooksMCPConfig(
             server_name="TestServer",
             server_description="Test Description",
             actions=[action],
         )
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_serve_setup(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -220,9 +220,9 @@ class TestServe:
             raise_exceptions=True,
         )
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_list_tools_handler(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -267,9 +267,9 @@ class TestServe:
         assert tools[0].name == "test_action"
         assert tools[0].description == "Test action"
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_call_tool_handler_success(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -332,9 +332,9 @@ class TestServe:
         assert "Exit code: 0" in result[0].text
         assert "STDOUT:\nHello World" in result[0].text
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_call_tool_handler_action_not_found(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -378,9 +378,9 @@ class TestServe:
 
         assert "Action 'nonexistent_action' not found" in str(exc_info.value)
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_call_tool_handler_execution_error(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -430,9 +430,9 @@ class TestServe:
 
         assert "Test execution error" in str(exc_info.value)
 
-    @patch("actions_mcp.server.stdio_server")
-    @patch("actions_mcp.server.Server")
-    @patch("actions_mcp.server.CommandExecutor")
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
     def test_call_tool_handler_unexpected_error(
         self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
     ):
@@ -493,8 +493,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("asyncio.run") as mock_asyncio_run,
         ):
             # Mock path exists check
@@ -510,7 +510,7 @@ class TestMain:
             main()
 
             # Verify config path was constructed correctly
-            mock_path.assert_called_with("./actions_mcp.yaml")
+            mock_path.assert_called_with("./hooks_mcp.yaml")
             mock_config_class.from_yaml.assert_called_once()
             mock_asyncio_run.assert_called_once()
 
@@ -520,8 +520,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("asyncio.run"),
         ):
             # Mock path exists check
@@ -545,9 +545,9 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
-            patch("actions_mcp.server.os.chdir") as mock_chdir,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.os.chdir") as mock_chdir,
             patch("asyncio.run"),
         ):
             # Mock path exists check
@@ -571,7 +571,7 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.os.chdir") as mock_chdir,
+            patch("hooks_mcp.server.os.chdir") as mock_chdir,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,
         ):
@@ -594,7 +594,7 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.Path") as mock_path,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,
         ):
@@ -620,8 +620,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,
         ):
@@ -648,8 +648,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,
         ):
@@ -683,8 +683,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("asyncio.run"),
             patch("dotenv.load_dotenv") as mock_load_dotenv,
         ):
@@ -713,8 +713,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("asyncio.run") as mock_asyncio_run,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,
@@ -738,7 +738,7 @@ class TestMain:
                 main()
 
             # Verify graceful shutdown message and exit
-            mock_print.assert_called_once_with("ActionsMCP server stopped by user")
+            mock_print.assert_called_once_with("HooksMCP server stopped by user")
             mock_exit.assert_called_once_with(0)
 
     def test_main_server_start_error(self):
@@ -747,8 +747,8 @@ class TestMain:
 
         with (
             patch("sys.argv", test_args),
-            patch("actions_mcp.server.Path") as mock_path,
-            patch("actions_mcp.server.ActionsMCPConfig") as mock_config_class,
+            patch("hooks_mcp.server.Path") as mock_path,
+            patch("hooks_mcp.server.HooksMCPConfig") as mock_config_class,
             patch("asyncio.run") as mock_asyncio_run,
             patch("builtins.print") as mock_print,
             patch("sys.exit") as mock_exit,

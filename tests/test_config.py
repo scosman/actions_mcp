@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from actions_mcp.config import ActionsMCPConfig, ConfigError
+from hooks_mcp.config import ConfigError, HooksMCPConfig
 
 
 class TestConfig:
@@ -22,12 +22,12 @@ actions:
             f.write(yaml_content)
             f.flush()
 
-            config = ActionsMCPConfig.from_yaml(f.name)
+            config = HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
 
-        assert config.server_name == "ActionsMCP"
+        assert config.server_name == "HooksMCP"
         assert (
             config.server_description
             == "Project-specific development tools exposed via MCP"
@@ -87,7 +87,7 @@ actions:
             f.write(yaml_content)
             f.flush()
 
-            config = ActionsMCPConfig.from_yaml(f.name)
+            config = HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
@@ -161,7 +161,7 @@ server_description: "Development tools for MyProject"
             f.flush()
 
             with pytest.raises(ConfigError) as context:
-                ActionsMCPConfig.from_yaml(f.name)
+                HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
@@ -186,7 +186,7 @@ actions:
             f.flush()
 
             with pytest.raises(ConfigError) as context:
-                ActionsMCPConfig.from_yaml(f.name)
+                HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
@@ -207,7 +207,7 @@ actions:
             f.flush()
 
             with pytest.raises(ConfigError) as context:
-                ActionsMCPConfig.from_yaml(f.name)
+                HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
@@ -235,7 +235,7 @@ actions:
             f.write(yaml_content)
             f.flush()
 
-            config = ActionsMCPConfig.from_yaml(f.name)
+            config = HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
@@ -274,7 +274,7 @@ actions:
             f.write(yaml_content)
             f.flush()
 
-            config = ActionsMCPConfig.from_yaml(f.name)
+            config = HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()

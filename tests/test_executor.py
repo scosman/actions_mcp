@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from actions_mcp.config import Action, ActionParameter, ParameterType
-from actions_mcp.executor import CommandExecutor, ExecutionError
+from hooks_mcp.config import Action, ActionParameter, ParameterType
+from hooks_mcp.executor import CommandExecutor, ExecutionError
 
 
 class TestExecutor:

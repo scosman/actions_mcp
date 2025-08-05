@@ -5,7 +5,7 @@ import yaml
 
 
 class ConfigError(Exception):
-    """Exception raised for errors in the ActionsMCP configuration."""
+    """Exception raised for errors in the HooksMCP configuration."""
 
     pass
 
@@ -73,13 +73,13 @@ class Action:
         command = data.get("command")
 
         if not name:
-            raise ConfigError("ActionsMCP Error: 'name' is required for each action")
+            raise ConfigError("HooksMCP Error: 'name' is required for each action")
         if not description:
             raise ConfigError(
-                "ActionsMCP Error: 'description' is required for each action"
+                "HooksMCP Error: 'description' is required for each action"
             )
         if not command:
-            raise ConfigError("ActionsMCP Error: 'command' is required for each action")
+            raise ConfigError("HooksMCP Error: 'command' is required for each action")
 
         parameters = []
         if "parameters" in data:
@@ -91,11 +91,11 @@ class Action:
 
                 if not param_name:
                     raise ConfigError(
-                        f"ActionsMCP Error: 'name' is required for each parameter in action '{name}'"
+                        f"HooksMCP Error: 'name' is required for each parameter in action '{name}'"
                     )
                 if not param_type:
                     raise ConfigError(
-                        f"ActionsMCP Error: 'type' is required for parameter '{param_name}' in action '{name}'"
+                        f"HooksMCP Error: 'type' is required for parameter '{param_name}' in action '{name}'"
                     )
 
                 if param_type not in [
@@ -105,7 +105,7 @@ class Action:
                     ParameterType.INSECURE_STRING,
                 ]:
                     raise ConfigError(
-                        f"ActionsMCP Error: Invalid parameter type '{param_type}' for parameter '{param_name}' in action '{name}'. "
+                        f"HooksMCP Error: Invalid parameter type '{param_type}' for parameter '{param_name}' in action '{name}'. "
                         f"Valid types are: project_file_path, required_env_var, optional_env_var, insecure_string"
                     )
 
@@ -125,8 +125,8 @@ class Action:
         )
 
 
-class ActionsMCPConfig:
-    """Main configuration class for ActionsMCP."""
+class HooksMCPConfig:
+    """Main configuration class for HooksMCP."""
 
     def __init__(
         self,
@@ -135,17 +135,17 @@ class ActionsMCPConfig:
         server_description: Optional[str] = None,
     ):
         self.actions = actions
-        self.server_name = server_name or "ActionsMCP"
+        self.server_name = server_name or "HooksMCP"
         self.server_description = (
             server_description or "Project-specific development tools exposed via MCP"
         )
 
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> "ActionsMCPConfig":
+    def from_yaml(cls, yaml_path: str) -> "HooksMCPConfig":
         """Load configuration from a YAML file."""
         if not os.path.exists(yaml_path):
             raise ConfigError(
-                f"ActionsMCP Error: Configuration file '{yaml_path}' not found"
+                f"HooksMCP Error: Configuration file '{yaml_path}' not found"
             )
 
         try:
@@ -153,32 +153,32 @@ class ActionsMCPConfig:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
             raise ConfigError(
-                f"ActionsMCP Error: Failed to parse YAML file '{yaml_path}': {str(e)}"
+                f"HooksMCP Error: Failed to parse YAML file '{yaml_path}': {str(e)}"
             )
         except Exception as e:
             raise ConfigError(
-                f"ActionsMCP Error: Failed to read configuration file '{yaml_path}': {str(e)}"
+                f"HooksMCP Error: Failed to read configuration file '{yaml_path}': {str(e)}"
             )
 
         if not isinstance(data, dict):
             raise ConfigError(
-                "ActionsMCP Error: Configuration file must contain a YAML object"
+                "HooksMCP Error: Configuration file must contain a YAML object"
             )
 
         actions_data = data.get("actions")
         if not actions_data:
             raise ConfigError(
-                "ActionsMCP Error: 'actions' array is required in configuration file"
+                "HooksMCP Error: 'actions' array is required in configuration file"
             )
 
         if not isinstance(actions_data, list):
-            raise ConfigError("ActionsMCP Error: 'actions' must be an array")
+            raise ConfigError("HooksMCP Error: 'actions' must be an array")
 
         actions = []
         for i, action_data in enumerate(actions_data):
             if not isinstance(action_data, dict):
                 raise ConfigError(
-                    f"ActionsMCP Error: Each action must be an object (action[{i}])"
+                    f"HooksMCP Error: Each action must be an object (action[{i}])"
                 )
             try:
                 action = Action.from_dict(action_data)
@@ -188,7 +188,7 @@ class ActionsMCPConfig:
                 raise
             except Exception as e:
                 raise ConfigError(
-                    f"ActionsMCP Error: Failed to parse action[{i}]: {str(e)}"
+                    f"HooksMCP Error: Failed to parse action[{i}]: {str(e)}"
                 )
 
         return cls(
