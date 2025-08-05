@@ -8,7 +8,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from .config import ActionsMCPConfig, ConfigError, ParameterType
+from .config import ActionsMCPConfig, ConfigError, ParameterType, ActionParameter
 from .executor import CommandExecutor, ExecutionError
 
 
@@ -26,7 +26,7 @@ def create_tool_definitions(config: ActionsMCPConfig) -> List[Tool]:
 
     for action in config.actions:
         # Convert action parameters to MCP tool parameters
-        parameters = []
+        parameters: List[ActionParameter] = []
         for param in action.parameters:
             # Skip required_env_var and optional_env_var as they're not provided by the client
             if param.type in [
@@ -35,7 +35,7 @@ def create_tool_definitions(config: ActionsMCPConfig) -> List[Tool]:
             ]:
                 continue
 
-            parameters.append(param.to_dict())
+            parameters.append(param)
 
         tool = Tool(
             name=action.name,
@@ -43,14 +43,14 @@ def create_tool_definitions(config: ActionsMCPConfig) -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    param["name"]: {
+                    param.name: {
                         "type": "string",
-                        "description": param["description"],
+                        "description": param.description,
                     }
                     for param in parameters
                 },
                 "required": [
-                    param["name"] for param in parameters if "default" not in param
+                    param.name for param in parameters if param.default is None
                 ],
             },
         )
@@ -93,11 +93,11 @@ async def serve(ActionsMCP_config: ActionsMCPConfig) -> None:
 
             # Format the result
             output = f"Command executed: {action.command}\n"
-            output += f"Status code: {result['status_code']}\n"
+            output += f"Exit code: {result['status_code']}\n"
             if result["stdout"]:
-                output += f"Output:\n{result['stdout']}\n"
+                output += f"STDOUT:\n{result['stdout']}\n"
             if result["stderr"]:
-                output += f"Errors:\n{result['stderr']}\n"
+                output += f"STDERR:\n{result['stderr']}\n"
 
             return [TextContent(type="text", text=output)]
         except ExecutionError:
