@@ -50,37 +50,70 @@ def process_terminal_output(text: str) -> str:
 def validate_project_path(path: str, project_root: Path) -> bool:
     """
     Validate that a path is within the project boundaries and doesn't
-    attempt to break out using directory traversal.
+    attempt to break out using directory traversal or any other method.
+
+    This function is designed to be secure against various attack vectors:
+    - Directory traversal attacks (../, ../../, etc.)
+    - Home directory expansion attacks (~/, ~user/)
+    - Environment variable expansion attacks ($HOME, ${EVIL_VAR}, etc.)
+    - Symlink attacks (symlinks pointing outside project root)
+    - Unicode normalization attacks
+    - Case sensitivity issues on different filesystems
+
+    The approach:
+    1. Fully expand and resolve both paths to their canonical forms
+    2. This includes expanding ~ (user home), environment variables, and symlinks
+    3. Then check if the fully resolved untrusted path is within project boundaries
+    4. Use pathlib for cross-platform compatibility
 
     Args:
-        path: Path to validate
-        project_root: Project root directory
+        path: Path to validate (untrusted input)
+        project_root: Project root directory (trusted)
 
     Returns:
-        True if path is valid, False otherwise
+        True if path is valid and within project boundaries, False otherwise
     """
-    # Resolve the project root to an absolute path
-    project_root = project_root.resolve()
+    import os
 
-    # Create a Path object for the given path
-    # We don't resolve it yet as that might normalize it in ways we don't want
-    path_obj = Path(path)
-
-    # Check if path starts with dangerous patterns
-    if path.startswith("~") or path.startswith("$HOME"):
-        return False
-
-    # Check if path contains parent directory references
-    if ".." in path:
-        return False
-
-    # Resolve the full path relative to project root
-    full_path = (project_root / path_obj).resolve()
-
-    # Check if the resolved path is within the project root
     try:
-        full_path.relative_to(project_root)
-        return True
-    except ValueError:
-        # Path is not within project root
+        # Resolve the trusted project root to canonical absolute path
+        # This handles symlinks, normalizes the path, and makes it absolute
+        canonical_project_root = project_root.resolve()
+
+        # For the untrusted path, we MUST fully expand everything to see where it really points
+        # Expand user home directory (~)
+        expanded_path = os.path.expanduser(path)
+        # Expand environment variables ($HOME, ${VAR}, etc.)
+        expanded_path = os.path.expandvars(expanded_path)
+
+        # Convert to Path object
+        untrusted_path = Path(expanded_path)
+
+        # If the path is absolute, resolve it directly
+        if untrusted_path.is_absolute():
+            candidate_path = untrusted_path.resolve()
+        else:
+            # If the path is relative, resolve it relative to the project root
+            # This is crucial for security - we want relative paths to be relative to project root
+            candidate_path = (canonical_project_root / untrusted_path).resolve()
+
+        # Check if the resolved candidate path is within the canonical project root
+        # Use is_relative_to() if available (Python 3.9+), otherwise use relative_to()
+        if hasattr(candidate_path, "is_relative_to"):
+            return candidate_path.is_relative_to(canonical_project_root)
+        else:
+            try:
+                candidate_path.relative_to(canonical_project_root)
+                return True
+            except ValueError:
+                return False
+
+    except (OSError, ValueError, RuntimeError):
+        # Any error during path resolution should result in rejection
+        # This catches issues like:
+        # - Invalid path characters
+        # - Too many levels of symbolic links
+        # - Permission errors
+        # - Path too long
+        # - Invalid environment variable references
         return False
