@@ -184,9 +184,9 @@ Optional command line arguments include:
 
 #### Cursor
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ%3D%3D)
 
-Or open this [cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ).
+Or open [this cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ).
 
 #### Windsurf/VSCode/etc
 
