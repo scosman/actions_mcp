@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from hooks_mcp.config import ConfigError, HooksMCPConfig, Prompt, PromptArgument
+from hooks_mcp.config import ConfigError, HooksMCPConfig
 
 
 class TestConfig:
@@ -334,7 +334,10 @@ prompts:
         prompt1 = config.prompts[0]
         assert prompt1.name == "code_review"
         assert prompt1.description == "Review code for best practices"
-        assert prompt1.prompt_text == "Please review this code for best practices and potential bugs."
+        assert (
+            prompt1.prompt_text
+            == "Please review this code for best practices and potential bugs."
+        )
         assert prompt1.prompt_file is None
         assert len(prompt1.arguments) == 0
 
@@ -343,6 +346,7 @@ prompts:
         assert prompt2.name == "test_generation"
         assert prompt2.description == "Generate unit tests for code"
         # Check that the prompt text contains the expected content (exact formatting may vary)
+        assert prompt2.prompt_text is not None
         assert "Generate unit tests for the following code:" in prompt2.prompt_text
         assert "$CODE_SNIPPET" in prompt2.prompt_text
         assert prompt2.prompt_file is None
@@ -351,19 +355,21 @@ prompts:
         arg1 = prompt2.arguments[0]
         assert arg1.name == "CODE_SNIPPET"
         assert arg1.description == "The code to generate tests for"
-        assert arg1.required == True
+        assert arg1.required
 
     def test_valid_config_with_prompts_file(self):
         """Test parsing a configuration with file-based prompts."""
         # Create a temporary directory for both files
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_dir_path = Path(temp_dir)
-            
+
             # Create the prompt file
             prompt_file_path = temp_dir_path / "test_prompt.md"
             with open(prompt_file_path, "w") as prompt_file:
-                prompt_file.write("# Code Analysis Prompt\n\nAnalyze the following code snippet.")
-            
+                prompt_file.write(
+                    "# Code Analysis Prompt\n\nAnalyze the following code snippet."
+                )
+
             # Create the config file
             yaml_content = """
 actions:
@@ -416,7 +422,7 @@ prompts:
         arg1 = prompt2.arguments[0]
         assert arg1.name == "SYSTEM_COMPONENT"
         assert arg1.description == "The system component to review"
-        assert arg1.required == False
+        assert not arg1.required
 
     def test_invalid_config_prompt_missing_required_fields(self):
         """Test that prompts with missing required fields raise an error."""
@@ -573,7 +579,10 @@ prompts:
             # Clean up
             Path(f.name).unlink()
 
-        assert "Prompt file './non_existent_file.md' for prompt 'missing_file_prompt' not found" in str(context.value)
+        assert (
+            "Prompt file './non_existent_file.md' for prompt 'missing_file_prompt' not found"
+            in str(context.value)
+        )
 
     def test_invalid_config_prompt_argument_missing_name(self):
         """Test that prompt arguments without names raise an error."""
@@ -664,7 +673,10 @@ get_prompt_tool_filter:
             # Clean up
             Path(f.name).unlink()
 
-        assert "Prompt 'nonexistent_prompt' in get_prompt_tool_filter not found in prompts list" in str(context.value)
+        assert (
+            "Prompt 'nonexistent_prompt' in get_prompt_tool_filter not found in prompts list"
+            in str(context.value)
+        )
 
     def test_config_get_prompt_tool_filter_empty_list(self):
         """Test that empty get_prompt_tool_filter list is handled correctly."""

@@ -11,11 +11,21 @@ from hooks_mcp.config import (
     ConfigError,
     HooksMCPConfig,
     ParameterType,
+)
+from hooks_mcp.config import (
     Prompt as ConfigPrompt,
+)
+from hooks_mcp.config import (
     PromptArgument as ConfigPromptArgument,
 )
 from hooks_mcp.executor import ExecutionError
-from hooks_mcp.server import create_prompt_definitions, create_tool_definitions, get_prompt_content, main, serve
+from hooks_mcp.server import (
+    create_prompt_definitions,
+    create_tool_definitions,
+    get_prompt_content,
+    main,
+    serve,
+)
 
 
 class TestCreateToolDefinitions:
@@ -196,22 +206,27 @@ class TestCreateToolDefinitions:
 
         # Should have the action tool plus the get_prompt tool
         assert len(tools) == 2
-        
+
         # First tool should be the action
         assert tools[0].name == "test_action"
         assert tools[0].description == "Test action description"
-        
+
         # Second tool should be get_prompt
         get_prompt_tool = tools[1]
         assert get_prompt_tool.name == "get_prompt"
+        assert get_prompt_tool.description is not None
         assert "Review code for best practices" in get_prompt_tool.description
         assert "Generate unit tests for code" in get_prompt_tool.description
-        
+
         # Check that the input schema has the correct properties
         assert "prompt_name" in get_prompt_tool.inputSchema["properties"]
-        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        assert (
+            get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        )
         assert "enum" in get_prompt_tool.inputSchema["properties"]["prompt_name"]
-        assert set(get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"]) == {"code_review", "test_generation"}
+        assert set(
+            get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"]
+        ) == {"code_review", "test_generation"}
         assert get_prompt_tool.inputSchema["required"] == ["prompt_name"]
 
     def test_create_tool_definitions_with_prompt_filter(self):
@@ -243,18 +258,23 @@ class TestCreateToolDefinitions:
 
         # Should have the action tool plus the get_prompt tool
         assert len(tools) == 2
-        
+
         # Second tool should be get_prompt
         get_prompt_tool = tools[1]
         assert get_prompt_tool.name == "get_prompt"
+        assert get_prompt_tool.description is not None
         assert "Review code for best practices" in get_prompt_tool.description
         assert "Generate unit tests for code" not in get_prompt_tool.description
-        
+
         # Check that the input schema has the correct properties
         assert "prompt_name" in get_prompt_tool.inputSchema["properties"]
-        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        assert (
+            get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        )
         assert "enum" in get_prompt_tool.inputSchema["properties"]["prompt_name"]
-        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"] == ["code_review"]
+        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"] == [
+            "code_review"
+        ]
         assert get_prompt_tool.inputSchema["required"] == ["prompt_name"]
 
     def test_create_tool_definitions_with_empty_prompt_filter(self):
@@ -1151,7 +1171,10 @@ class TestCreatePromptDefinitions:
     def test_empty_config(self):
         """Test creating prompt definitions from empty config."""
         config = HooksMCPConfig(
-            server_name="TestServer", server_description="Test Description", actions=[], prompts=[]
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[],
+            prompts=[],
         )
 
         prompts = create_prompt_definitions(config)
@@ -1212,7 +1235,7 @@ class TestCreatePromptDefinitions:
         arg = mcp_prompt.arguments[0]
         assert arg.name == "test_arg"
         assert arg.description == "Test argument description"
-        assert arg.required == True
+        assert arg.required
 
     def test_multiple_prompts(self):
         """Test creating prompt definitions for multiple prompts."""

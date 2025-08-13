@@ -32,7 +32,9 @@ class PromptArgument:
         required = data.get("required", False)
 
         if not name:
-            raise ConfigError("HooksMCP Error: 'name' is required for each prompt argument")
+            raise ConfigError(
+                "HooksMCP Error: 'name' is required for each prompt argument"
+            )
 
         return cls(name, description, required)
 
@@ -56,9 +58,13 @@ class Prompt:
 
         # Validate that exactly one of prompt_text or prompt_file is provided
         if prompt_text is None and prompt_file is None:
-            raise ConfigError(f"HooksMCP Error: Prompt '{name}' must specify either 'prompt' or 'prompt-file'")
+            raise ConfigError(
+                f"HooksMCP Error: Prompt '{name}' must specify either 'prompt' or 'prompt-file'"
+            )
         if prompt_text is not None and prompt_file is not None:
-            raise ConfigError(f"HooksMCP Error: Prompt '{name}' cannot specify both 'prompt' and 'prompt-file'")
+            raise ConfigError(
+                f"HooksMCP Error: Prompt '{name}' cannot specify both 'prompt' and 'prompt-file'"
+            )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], config_dir: Path) -> "Prompt":
@@ -72,19 +78,27 @@ class Prompt:
         if not name:
             raise ConfigError("HooksMCP Error: 'name' is required for each prompt")
         if not description:
-            raise ConfigError("HooksMCP Error: 'description' is required for each prompt")
+            raise ConfigError(
+                "HooksMCP Error: 'description' is required for each prompt"
+            )
 
         # Validate name and description length limits
         if len(name) > 32:
-            raise ConfigError(f"HooksMCP Error: Prompt name '{name}' exceeds 32 character limit")
+            raise ConfigError(
+                f"HooksMCP Error: Prompt name '{name}' exceeds 32 character limit"
+            )
         if len(description) > 256:
-            raise ConfigError(f"HooksMCP Error: Prompt description for '{name}' exceeds 256 character limit")
+            raise ConfigError(
+                f"HooksMCP Error: Prompt description for '{name}' exceeds 256 character limit"
+            )
 
         arguments = []
         if arguments_data:
             if not isinstance(arguments_data, list):
-                raise ConfigError(f"HooksMCP Error: 'arguments' must be a list for prompt '{name}'")
-            
+                raise ConfigError(
+                    f"HooksMCP Error: 'arguments' must be a list for prompt '{name}'"
+                )
+
             for i, arg_data in enumerate(arguments_data):
                 if not isinstance(arg_data, dict):
                     raise ConfigError(
@@ -314,7 +328,7 @@ class HooksMCPConfig:
         if prompts_data:
             if not isinstance(prompts_data, list):
                 raise ConfigError("HooksMCP Error: 'prompts' must be an array")
-            
+
             config_dir = Path(yaml_path).parent
             for i, prompt_data in enumerate(prompts_data):
                 if not isinstance(prompt_data, dict):

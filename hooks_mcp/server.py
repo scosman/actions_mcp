@@ -6,9 +6,24 @@ from typing import Any, Dict, List
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import GetPromptResult, Prompt, PromptArgument, TextContent, Tool
+from mcp.types import (
+    GetPromptResult,
+    Prompt,
+    PromptArgument,
+    PromptMessage,
+    TextContent,
+    Tool,
+)
 
-from .config import ActionParameter, ConfigError, HooksMCPConfig, ParameterType, Prompt as ConfigPrompt
+from .config import (
+    ActionParameter,
+    ConfigError,
+    HooksMCPConfig,
+    ParameterType,
+)
+from .config import (
+    Prompt as ConfigPrompt,
+)
 from .executor import CommandExecutor, ExecutionError
 
 
@@ -114,7 +129,7 @@ def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
 
             # Create enum of prompt names for the tool parameter
             prompt_names = [prompt.name for prompt in exposed_prompts]
-            
+
             get_prompt_tool = Tool(
                 name="get_prompt",
                 description=tool_description,
@@ -172,7 +187,7 @@ async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
     """
     # Create tool definitions
     tools = create_tool_definitions(hooks_mcp_config)
-    
+
     # Create prompt definitions
     prompts = create_prompt_definitions(hooks_mcp_config)
 
@@ -193,19 +208,25 @@ async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
         if name == "get_prompt":
             prompt_name = arguments.get("prompt_name")
             if not prompt_name:
-                raise ExecutionError("HooksMCP Error: 'prompt_name' argument is required for get_prompt tool")
-            
+                raise ExecutionError(
+                    "HooksMCP Error: 'prompt_name' argument is required for get_prompt tool"
+                )
+
             # Find the prompt by name
-            config_prompt = next((p for p in hooks_mcp_config.prompts if p.name == prompt_name), None)
+            config_prompt = next(
+                (p for p in hooks_mcp_config.prompts if p.name == prompt_name), None
+            )
             if not config_prompt:
-                raise ExecutionError(f"HooksMCP Error: Prompt '{prompt_name}' not found")
-            
+                raise ExecutionError(
+                    f"HooksMCP Error: Prompt '{prompt_name}' not found"
+                )
+
             # Get prompt content
             prompt_content = get_prompt_content(config_prompt, config_path)
-            
+
             # Return the prompt content as text
             return [TextContent(type="text", text=prompt_content)]
-        
+
         # Find the action by name
         action = next((a for a in hooks_mcp_config.actions if a.name == name), None)
         if not action:
@@ -233,29 +254,42 @@ async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
 
     # Register prompts if any exist
     if prompts:
+
         @server.list_prompts()
         async def list_prompts() -> List[Prompt]:
             return prompts
 
         @server.get_prompt()
-        async def get_prompt(name: str, arguments: Dict[str, Any] | None = None) -> GetPromptResult:
+        async def get_prompt(
+            name: str, arguments: Dict[str, Any] | None = None
+        ) -> GetPromptResult:
             # Find the prompt by name
-            config_prompt = next((p for p in hooks_mcp_config.prompts if p.name == name), None)
+            config_prompt = next(
+                (p for p in hooks_mcp_config.prompts if p.name == name), None
+            )
             if not config_prompt:
                 raise ExecutionError(f"HooksMCP Error: Prompt '{name}' not found")
-            
+
             # Get prompt content
             prompt_content = get_prompt_content(config_prompt, config_path)
-            
+
             # Return as GetPromptResult
             return GetPromptResult(
                 description=config_prompt.description,
-                messages=[{"role": "user", "content": {"type": "text", "text": prompt_content}}],
+                messages=[
+                    PromptMessage(
+                        role="user",
+                        content=TextContent(type="text", text=prompt_content),
+                    )
+                ],
             )
 
     # Set up server capabilities
     server_capabilities = server.create_initialization_options(
-        experimental_capabilities={"tools": {"listChanged": True}, "prompts": {"listChanged": True}}
+        experimental_capabilities={
+            "tools": {"listChanged": True},
+            "prompts": {"listChanged": True},
+        }
     )
 
     # Run the server
