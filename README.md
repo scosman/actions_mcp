@@ -76,7 +76,7 @@ See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
 
 - `server_name` (optional): Name of the MCP server (default: "HooksMCP")
 - `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
-- `actions` (required): Array of action definitions
+- `actions` (optional): Array of action definitions. If not provided, only prompts will be available.
 - `prompts` (optional): Array of prompt definitions
 - `get_prompt_tool_filter` (optional): Array of prompt names to expose via the `get_prompt` tool. If unset, all prompts are exposed. If empty, the `get_prompt` tool is not exposed.
 

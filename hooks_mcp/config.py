@@ -296,12 +296,7 @@ class HooksMCPConfig:
                 "HooksMCP Error: Configuration file must contain a YAML object"
             )
 
-        actions_data = data.get("actions")
-        if not actions_data:
-            raise ConfigError(
-                "HooksMCP Error: 'actions' array is required in configuration file"
-            )
-
+        actions_data = data.get("actions", [])
         if not isinstance(actions_data, list):
             raise ConfigError("HooksMCP Error: 'actions' must be an array")
 

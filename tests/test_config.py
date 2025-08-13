@@ -149,8 +149,8 @@ actions:
         assert param4.description == "Enable verbose output"
         assert param4.default is None
 
-    def test_invalid_config_missing_actions(self):
-        """Test that config without actions raises an error."""
+    def test_valid_config_missing_actions(self):
+        """Test that config without actions is valid."""
         yaml_content = """
 server_name: "MyProjectTools"
 server_description: "Development tools for MyProject"
@@ -160,13 +160,14 @@ server_description: "Development tools for MyProject"
             f.write(yaml_content)
             f.flush()
 
-            with pytest.raises(ConfigError) as context:
-                HooksMCPConfig.from_yaml(f.name)
+            config = HooksMCPConfig.from_yaml(f.name)
 
             # Clean up
             Path(f.name).unlink()
 
-        assert "'actions' array is required" in str(context.value)
+        assert config.server_name == "MyProjectTools"
+        assert config.server_description == "Development tools for MyProject"
+        assert len(config.actions) == 0
 
     def test_invalid_config_invalid_parameter_type(self):
         """Test that config with invalid parameter type raises an error."""
@@ -705,3 +706,62 @@ get_prompt_tool_filter: []
 
         assert len(config.prompts) == 1
         assert config.get_prompt_tool_filter == []
+
+    def test_valid_config_prompts_only(self):
+        """Test parsing a configuration with only prompts and no actions."""
+        yaml_content = """
+prompts:
+  - name: "code_review"
+    description: "Review code for best practices"
+    prompt: "Please review this code for best practices and potential bugs."
+    
+  - name: "test_generation"
+    description: "Generate unit tests for code"
+    prompt: "Generate unit tests for the following code:\n$CODE_SNIPPET"
+    arguments:
+      - name: "CODE_SNIPPET"
+        description: "The code to generate tests for"
+        required: true
+"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(yaml_content)
+            f.flush()
+
+            config = HooksMCPConfig.from_yaml(f.name)
+
+            # Clean up
+            Path(f.name).unlink()
+
+        assert config.server_name == "HooksMCP"
+        assert (
+            config.server_description
+            == "Project-specific development tools exposed via MCP"
+        )
+        assert len(config.actions) == 0
+        assert len(config.prompts) == 2
+
+        # Check first prompt
+        prompt1 = config.prompts[0]
+        assert prompt1.name == "code_review"
+        assert prompt1.description == "Review code for best practices"
+        assert (
+            prompt1.prompt_text
+            == "Please review this code for best practices and potential bugs."
+        )
+        assert prompt1.prompt_file is None
+        assert len(prompt1.arguments) == 0
+
+        # Check second prompt
+        prompt2 = config.prompts[1]
+        assert prompt2.name == "test_generation"
+        assert prompt2.description == "Generate unit tests for code"
+        assert prompt2.prompt_text is not None
+        assert "$CODE_SNIPPET" in prompt2.prompt_text
+        assert prompt2.prompt_file is None
+        assert len(prompt2.arguments) == 1
+
+        arg1 = prompt2.arguments[0]
+        assert arg1.name == "CODE_SNIPPET"
+        assert arg1.description == "The code to generate tests for"
+        assert arg1.required
