@@ -6,10 +6,43 @@ from typing import Any, Dict, List
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import GetPromptResult, Prompt, PromptArgument, TextContent, Tool
 
-from .config import ActionParameter, ConfigError, HooksMCPConfig, ParameterType
+from .config import ActionParameter, ConfigError, HooksMCPConfig, ParameterType, Prompt as ConfigPrompt
 from .executor import CommandExecutor, ExecutionError
+
+
+def create_prompt_definitions(config: HooksMCPConfig) -> List[Prompt]:
+    """
+    Create MCP prompt definitions from the HooksMCP configuration.
+
+    Args:
+        config: The HooksMCP configuration
+
+    Returns:
+        List of MCP Prompt definitions
+    """
+    prompts = []
+
+    for prompt in config.prompts:
+        # Convert prompt arguments to MCP prompt arguments
+        arguments = [
+            PromptArgument(
+                name=arg.name,
+                description=arg.description,
+                required=arg.required,
+            )
+            for arg in prompt.arguments
+        ]
+
+        mcp_prompt = Prompt(
+            name=prompt.name,
+            description=prompt.description,
+            arguments=arguments or None,
+        )
+        prompts.append(mcp_prompt)
+
+    return prompts
 
 
 def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
@@ -56,10 +89,81 @@ def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
         )
         tools.append(tool)
 
+    # Add get_prompt tool if there are prompts and it should be exposed
+    if config.prompts:
+        # Determine which prompts to expose based on get_prompt_tool_filter
+        exposed_prompts = config.prompts
+        if config.get_prompt_tool_filter is not None:
+            # If filter is empty, don't expose the tool at all
+            if not config.get_prompt_tool_filter:
+                return tools
+            # Otherwise, filter prompts by name
+            filter_set = set(config.get_prompt_tool_filter)
+            exposed_prompts = [p for p in config.prompts if p.name in filter_set]
+
+        # Only add the tool if there are prompts to expose
+        if exposed_prompts:
+            # Build tool description with list of prompts
+            prompt_list_desc = "\n".join(
+                [f"- {prompt.name}: {prompt.description}" for prompt in exposed_prompts]
+            )
+            tool_description = (
+                "Get a prompt designed for this codebase. The prompts include:\n"
+                f"{prompt_list_desc}"
+            )
+
+            # Create enum of prompt names for the tool parameter
+            prompt_names = [prompt.name for prompt in exposed_prompts]
+            
+            get_prompt_tool = Tool(
+                name="get_prompt",
+                description=tool_description,
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt_name": {
+                            "type": "string",
+                            "description": "The name of the prompt to retrieve",
+                            "enum": prompt_names,
+                        }
+                    },
+                    "required": ["prompt_name"],
+                },
+            )
+            tools.append(get_prompt_tool)
+
     return tools
 
 
-async def serve(hooks_mcp_config: HooksMCPConfig) -> None:
+def get_prompt_content(config_prompt: ConfigPrompt, config_path: Path) -> str:
+    """
+    Get the content of a prompt from either the inline text or file.
+
+    Args:
+        config_prompt: The prompt configuration
+        config_path: Path to the configuration file (used for resolving relative paths)
+
+    Returns:
+        The prompt content as a string
+    """
+    if config_prompt.prompt_text:
+        return config_prompt.prompt_text
+    elif config_prompt.prompt_file:
+        prompt_file_path = config_path.parent / config_prompt.prompt_file
+        try:
+            with open(prompt_file_path, "r") as f:
+                return f.read()
+        except Exception as e:
+            raise ExecutionError(
+                f"HooksMCP Error: Failed to read prompt file '{config_prompt.prompt_file}': {str(e)}"
+            )
+    else:
+        raise ExecutionError(
+            f"HooksMCP Error: Prompt '{config_prompt.name}' has no content"
+        )
+
+
+async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
     """
     Run the HooksMCP server.
 
@@ -68,6 +172,9 @@ async def serve(hooks_mcp_config: HooksMCPConfig) -> None:
     """
     # Create tool definitions
     tools = create_tool_definitions(hooks_mcp_config)
+    
+    # Create prompt definitions
+    prompts = create_prompt_definitions(hooks_mcp_config)
 
     # Create command executor
     executor = CommandExecutor()
@@ -82,6 +189,23 @@ async def serve(hooks_mcp_config: HooksMCPConfig) -> None:
 
     @server.call_tool()
     async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+        # Handle get_prompt tool specially
+        if name == "get_prompt":
+            prompt_name = arguments.get("prompt_name")
+            if not prompt_name:
+                raise ExecutionError("HooksMCP Error: 'prompt_name' argument is required for get_prompt tool")
+            
+            # Find the prompt by name
+            config_prompt = next((p for p in hooks_mcp_config.prompts if p.name == prompt_name), None)
+            if not config_prompt:
+                raise ExecutionError(f"HooksMCP Error: Prompt '{prompt_name}' not found")
+            
+            # Get prompt content
+            prompt_content = get_prompt_content(config_prompt, config_path)
+            
+            # Return the prompt content as text
+            return [TextContent(type="text", text=prompt_content)]
+        
         # Find the action by name
         action = next((a for a in hooks_mcp_config.actions if a.name == name), None)
         if not action:
@@ -107,9 +231,31 @@ async def serve(hooks_mcp_config: HooksMCPConfig) -> None:
                 f"HooksMCP Error: Unexpected error executing action '{name}': {str(e)}"
             )
 
+    # Register prompts if any exist
+    if prompts:
+        @server.list_prompts()
+        async def list_prompts() -> List[Prompt]:
+            return prompts
+
+        @server.get_prompt()
+        async def get_prompt(name: str, arguments: Dict[str, Any] | None = None) -> GetPromptResult:
+            # Find the prompt by name
+            config_prompt = next((p for p in hooks_mcp_config.prompts if p.name == name), None)
+            if not config_prompt:
+                raise ExecutionError(f"HooksMCP Error: Prompt '{name}' not found")
+            
+            # Get prompt content
+            prompt_content = get_prompt_content(config_prompt, config_path)
+            
+            # Return as GetPromptResult
+            return GetPromptResult(
+                description=config_prompt.description,
+                messages=[{"role": "user", "content": {"type": "text", "text": prompt_content}}],
+            )
+
     # Set up server capabilities
     server_capabilities = server.create_initialization_options(
-        experimental_capabilities={"tools": {"listChanged": True}}
+        experimental_capabilities={"tools": {"listChanged": True}, "prompts": {"listChanged": True}}
     )
 
     # Run the server
@@ -180,7 +326,7 @@ def main() -> None:
     try:
         import asyncio
 
-        asyncio.run(serve(config))
+        asyncio.run(serve(config, config_path))
     except KeyboardInterrupt:
         print("HooksMCP server stopped by user")
         sys.exit(0)

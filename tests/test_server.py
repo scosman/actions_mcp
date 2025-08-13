@@ -1,4 +1,6 @@
 import asyncio
+import tempfile
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -9,9 +11,11 @@ from hooks_mcp.config import (
     ConfigError,
     HooksMCPConfig,
     ParameterType,
+    Prompt as ConfigPrompt,
+    PromptArgument as ConfigPromptArgument,
 )
 from hooks_mcp.executor import ExecutionError
-from hooks_mcp.server import create_tool_definitions, main, serve
+from hooks_mcp.server import create_prompt_definitions, create_tool_definitions, get_prompt_content, main, serve
 
 
 class TestCreateToolDefinitions:
@@ -164,6 +168,121 @@ class TestCreateToolDefinitions:
         assert tools[1].description == "Second action"
         assert "PATH" in tools[1].inputSchema["properties"]
 
+    def test_create_tool_definitions_with_prompts(self):
+        """Test creating tool definitions when prompts are present."""
+        prompt1 = ConfigPrompt(
+            name="code_review",
+            description="Review code for best practices",
+            prompt_text="Please review this code for best practices and potential bugs.",
+        )
+        prompt2 = ConfigPrompt(
+            name="test_generation",
+            description="Generate unit tests for code",
+            prompt_text="Generate unit tests for the following code:\n$CODE_SNIPPET",
+        )
+        action = Action(
+            name="test_action",
+            description="Test action description",
+            command="echo hello",
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1, prompt2],
+        )
+
+        tools = create_tool_definitions(config)
+
+        # Should have the action tool plus the get_prompt tool
+        assert len(tools) == 2
+        
+        # First tool should be the action
+        assert tools[0].name == "test_action"
+        assert tools[0].description == "Test action description"
+        
+        # Second tool should be get_prompt
+        get_prompt_tool = tools[1]
+        assert get_prompt_tool.name == "get_prompt"
+        assert "Review code for best practices" in get_prompt_tool.description
+        assert "Generate unit tests for code" in get_prompt_tool.description
+        
+        # Check that the input schema has the correct properties
+        assert "prompt_name" in get_prompt_tool.inputSchema["properties"]
+        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        assert "enum" in get_prompt_tool.inputSchema["properties"]["prompt_name"]
+        assert set(get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"]) == {"code_review", "test_generation"}
+        assert get_prompt_tool.inputSchema["required"] == ["prompt_name"]
+
+    def test_create_tool_definitions_with_prompt_filter(self):
+        """Test creating tool definitions with get_prompt_tool_filter."""
+        prompt1 = ConfigPrompt(
+            name="code_review",
+            description="Review code for best practices",
+            prompt_text="Please review this code for best practices and potential bugs.",
+        )
+        prompt2 = ConfigPrompt(
+            name="test_generation",
+            description="Generate unit tests for code",
+            prompt_text="Generate unit tests for the following code:\n$CODE_SNIPPET",
+        )
+        action = Action(
+            name="test_action",
+            description="Test action description",
+            command="echo hello",
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1, prompt2],
+            get_prompt_tool_filter=["code_review"],
+        )
+
+        tools = create_tool_definitions(config)
+
+        # Should have the action tool plus the get_prompt tool
+        assert len(tools) == 2
+        
+        # Second tool should be get_prompt
+        get_prompt_tool = tools[1]
+        assert get_prompt_tool.name == "get_prompt"
+        assert "Review code for best practices" in get_prompt_tool.description
+        assert "Generate unit tests for code" not in get_prompt_tool.description
+        
+        # Check that the input schema has the correct properties
+        assert "prompt_name" in get_prompt_tool.inputSchema["properties"]
+        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["type"] == "string"
+        assert "enum" in get_prompt_tool.inputSchema["properties"]["prompt_name"]
+        assert get_prompt_tool.inputSchema["properties"]["prompt_name"]["enum"] == ["code_review"]
+        assert get_prompt_tool.inputSchema["required"] == ["prompt_name"]
+
+    def test_create_tool_definitions_with_empty_prompt_filter(self):
+        """Test creating tool definitions with empty get_prompt_tool_filter."""
+        prompt1 = ConfigPrompt(
+            name="code_review",
+            description="Review code for best practices",
+            prompt_text="Please review this code for best practices and potential bugs.",
+        )
+        action = Action(
+            name="test_action",
+            description="Test action description",
+            command="echo hello",
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1],
+            get_prompt_tool_filter=[],
+        )
+
+        tools = create_tool_definitions(config)
+
+        # Should only have the action tool, not the get_prompt tool
+        assert len(tools) == 1
+        assert tools[0].name == "test_action"
+
 
 class TestServe:
     """Test the serve function."""
@@ -203,8 +322,11 @@ class TestServe:
         mock_executor = MagicMock()
         mock_executor_class.return_value = mock_executor
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run the serve function
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Verify server was created with correct name
         mock_server_class.assert_called_once_with("TestServer")
@@ -257,8 +379,11 @@ class TestServe:
         mock_server.list_tools = capture_list_tools
         mock_server.call_tool = capture_call_tool
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run serve to register handlers
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Test the list_tools handler
         tools = asyncio.run(registered_handlers["list_tools"]())
@@ -312,8 +437,11 @@ class TestServe:
         mock_server.list_tools = capture_list_tools
         mock_server.call_tool = capture_call_tool
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run serve to register handlers
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Test the call_tool handler
         result = asyncio.run(
@@ -369,8 +497,11 @@ class TestServe:
         mock_server.list_tools = capture_list_tools
         mock_server.call_tool = capture_call_tool
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run serve to register handlers
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Test the call_tool handler with non-existent action
         with pytest.raises(ExecutionError) as exc_info:
@@ -421,8 +552,11 @@ class TestServe:
         mock_server.list_tools = capture_list_tools
         mock_server.call_tool = capture_call_tool
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run serve to register handlers
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Test the call_tool handler
         with pytest.raises(ExecutionError) as exc_info:
@@ -471,8 +605,11 @@ class TestServe:
         mock_server.list_tools = capture_list_tools
         mock_server.call_tool = capture_call_tool
 
+        # Create a mock config path
+        mock_config_path = Path(".")
+
         # Run serve to register handlers
-        asyncio.run(serve(mock_config))
+        asyncio.run(serve(mock_config, mock_config_path))
 
         # Test the call_tool handler
         with pytest.raises(ExecutionError) as exc_info:
@@ -482,6 +619,236 @@ class TestServe:
             "Unexpected error executing action 'test_action': Unexpected error"
             in str(exc_info.value)
         )
+
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_list_prompts_handler(
+        self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
+    ):
+        """Test that the list_prompts handler returns correct prompts."""
+        # Add prompts to the mock config
+        prompt1 = ConfigPrompt(
+            name="test_prompt1",
+            description="Test prompt 1 description",
+            prompt_text="Test prompt 1 content",
+        )
+        prompt2 = ConfigPrompt(
+            name="test_prompt2",
+            description="Test prompt 2 description",
+            prompt_file="./test_file.md",
+        )
+        mock_config.prompts = [prompt1, prompt2]
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        # Capture the registered handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(mock_config, mock_config_path))
+
+        # Test the list_prompts handler
+        prompts = asyncio.run(registered_handlers["list_prompts"]())
+
+        assert len(prompts) == 2
+        assert prompts[0].name == "test_prompt1"
+        assert prompts[1].name == "test_prompt2"
+
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_get_prompt_handler_success(
+        self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
+    ):
+        """Test successful prompt retrieval via get_prompt handler."""
+        # Add a prompt to the mock config
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_text="Test prompt content",
+        )
+        mock_config.prompts = [prompt]
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(mock_config, mock_config_path))
+
+        # Test the get_prompt handler
+        result = asyncio.run(registered_handlers["get_prompt"]("test_prompt"))
+
+        assert result.description == "Test prompt description"
+        assert len(result.messages) == 1
+        # Access the PromptMessage object properly
+        prompt_message = result.messages[0]
+        assert prompt_message.role == "user"
+        assert prompt_message.content.type == "text"
+        assert prompt_message.content.text == "Test prompt content"
+
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_get_prompt_handler_prompt_not_found(
+        self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
+    ):
+        """Test get_prompt handler with non-existent prompt."""
+        # Add a prompt to the mock config
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_text="Test prompt content",
+        )
+        mock_config.prompts = [prompt]
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(mock_config, mock_config_path))
+
+        # Test the get_prompt handler with non-existent prompt
+        with pytest.raises(ExecutionError) as exc_info:
+            asyncio.run(registered_handlers["get_prompt"]("nonexistent_prompt"))
+
+        assert "Prompt 'nonexistent_prompt' not found" in str(exc_info.value)
 
 
 class TestMain:
@@ -776,3 +1143,152 @@ class TestMain:
             assert "Failed to start server" in mock_print.call_args[0][0]
             assert "Server failed to start" in mock_print.call_args[0][0]
             mock_exit.assert_called_once_with(1)
+
+
+class TestCreatePromptDefinitions:
+    """Test the create_prompt_definitions function."""
+
+    def test_empty_config(self):
+        """Test creating prompt definitions from empty config."""
+        config = HooksMCPConfig(
+            server_name="TestServer", server_description="Test Description", actions=[], prompts=[]
+        )
+
+        prompts = create_prompt_definitions(config)
+
+        assert prompts == []
+
+    def test_single_prompt_no_arguments(self):
+        """Test creating prompt definition for single prompt without arguments."""
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_text="Test prompt content",
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[],
+            prompts=[prompt],
+        )
+
+        prompts = create_prompt_definitions(config)
+
+        assert len(prompts) == 1
+        mcp_prompt = prompts[0]
+        assert mcp_prompt.name == "test_prompt"
+        assert mcp_prompt.description == "Test prompt description"
+        assert mcp_prompt.arguments is None
+
+    def test_single_prompt_with_arguments(self):
+        """Test creating prompt definition for single prompt with arguments."""
+        prompt_arg = ConfigPromptArgument(
+            name="test_arg",
+            description="Test argument description",
+            required=True,
+        )
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_text="Test prompt content with $test_arg",
+            arguments=[prompt_arg],
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[],
+            prompts=[prompt],
+        )
+
+        prompts = create_prompt_definitions(config)
+
+        assert len(prompts) == 1
+        mcp_prompt = prompts[0]
+        assert mcp_prompt.name == "test_prompt"
+        assert mcp_prompt.description == "Test prompt description"
+        assert mcp_prompt.arguments is not None
+        assert len(mcp_prompt.arguments) == 1
+
+        arg = mcp_prompt.arguments[0]
+        assert arg.name == "test_arg"
+        assert arg.description == "Test argument description"
+        assert arg.required == True
+
+    def test_multiple_prompts(self):
+        """Test creating prompt definitions for multiple prompts."""
+        prompt1 = ConfigPrompt(
+            name="prompt1",
+            description="First prompt",
+            prompt_text="Content of first prompt",
+        )
+        prompt2 = ConfigPrompt(
+            name="prompt2",
+            description="Second prompt",
+            prompt_file="./test_file.md",
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[],
+            prompts=[prompt1, prompt2],
+        )
+
+        prompts = create_prompt_definitions(config)
+
+        assert len(prompts) == 2
+        assert prompts[0].name == "prompt1"
+        assert prompts[1].name == "prompt2"
+
+
+class TestGetPromptContent:
+    """Test the get_prompt_content function."""
+
+    def test_get_prompt_content_inline(self):
+        """Test getting prompt content from inline text."""
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_text="Test prompt content",
+        )
+        config_path = Path(".")
+
+        content = get_prompt_content(prompt, config_path)
+
+        assert content == "Test prompt content"
+
+    def test_get_prompt_content_from_file(self):
+        """Test getting prompt content from a file."""
+        # Create a temporary file with prompt content
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Test Prompt\n\nThis is test prompt content.")
+            f.flush()
+            prompt_file_path = Path(f.name)
+
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_file=str(prompt_file_path),
+        )
+        config_path = prompt_file_path.parent
+
+        content = get_prompt_content(prompt, config_path)
+
+        assert content == "# Test Prompt\n\nThis is test prompt content."
+
+        # Clean up
+        prompt_file_path.unlink()
+
+    def test_get_prompt_content_file_not_found(self):
+        """Test getting prompt content from a non-existent file."""
+        prompt = ConfigPrompt(
+            name="test_prompt",
+            description="Test prompt description",
+            prompt_file="./nonexistent_file.md",
+        )
+        config_path = Path(".")
+
+        with pytest.raises(ExecutionError) as exc_info:
+            get_prompt_content(prompt, config_path)
+
+        assert "Failed to read prompt file" in str(exc_info.value)
+        assert "./nonexistent_file.md" in str(exc_info.value)

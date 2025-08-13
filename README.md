@@ -77,6 +77,8 @@ See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
 - `server_name` (optional): Name of the MCP server (default: "HooksMCP")
 - `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
 - `actions` (required): Array of action definitions
+- `prompts` (optional): Array of prompt definitions
+- `get_prompt_tool_filter` (optional): Array of prompt names to expose via the `get_prompt` tool. If unset, all prompts are exposed. If empty, the `get_prompt` tool is not exposed.
 
 ### Action Fields
 
@@ -102,7 +104,58 @@ Each parameter in an action's `parameters` array can have the following fields:
 - `description` (optional): Human-readable description of the parameter
 - `default` (optional): Default value for the parameter
 
-## Parameter Types Explained
+### Prompt Fields
+
+Each prompt in the `prompts` array can have the following fields:
+
+- `name` (required): Unique identifier for the prompt (max 32 characters)
+- `description` (required): Human-readable description of what the prompt does (max 256 characters)
+- `prompt` (optional): Inline prompt text content. Either `prompt` or `prompt-file` must be specified.
+- `prompt-file` (optional): Relative path to a file containing the prompt text content. Either `prompt` or `prompt-file` must be specified.
+- `arguments` (optional): Definitions of each argument used in the prompt.
+
+### Prompt Argument Fields
+
+Each argument in a prompt's `arguments` array can have the following fields:
+
+- `name` (required): The argument name
+- `description` (optional): Human-readable description of the argument
+- `required` (optional): Boolean indicating if the argument is required (default: false)
+
+### Prompt Examples
+
+Prompts can be defined inline or loaded from files:
+
+```yaml
+prompts:
+  - name: "code_review"
+    description: "Review code for best practices and potential bugs"
+    prompt: "Please review this code for best practices and potential bugs:\n\n$CODE_SNIPPET"
+    arguments:
+      - name: "CODE_SNIPPET"
+        description: "The code to review"
+        required: true
+
+  - name: "architecture_review"
+    description: "Review system architecture decisions"
+    prompt-file: "./prompts/architecture_review.md"
+```
+
+The `get_prompt` tool is automatically exposed when prompts are defined, allowing coding agents to retrieve prompt content by name:
+
+```yaml
+get_prompt_tool_filter:
+  - "code_review"
+  - "architecture_review"
+```
+
+To disable the `get_prompt` tool entirely, set `get_prompt_tool_filter` to an empty array:
+
+```yaml
+get_prompt_tool_filter: []
+```
+
+## Running HooksMCP
 
 ### project_file_path
 
