@@ -102,12 +102,77 @@ Each parameter in an action's `parameters` array can have the following fields:
 
 - `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
 - `type` (required): One of the following parameter types:
-  - `project_file_path`: A local path within the project, relative to project root. Validated to ensure it's within project boundaries and exists.
-  - `insecure_string`: Any string from the model. No validation. Use with caution.
-  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model. The server will fail to start if the environment is missing this var. Useful for sepcifing that a secret (API key) is needed, without checking the value into your repository. Typically setup when you configure your MCP server (in `mcp.json` and similar).
-  - `optional_env_var`: An optional environment variable. Not specified by the calling model. Server will not error on startup if this is missing.
-- `description` (optional): Human-readable description of the parameter
-- `default` (optional): Default value for the parameter
+  - `project_file_path`: A local path within the project, relative to project root. See [project_file_path](#project_file_path) below.
+  - `insecure_string`: Any string from the model. No validation. Use with caution. See [insecure_string](#insecure_string) below.
+  - `required_env_var`: An environment variable that must be set before the server starts. See [required_env_var](#required_env_var) below.
+  - `optional_env_var`: An optional environment variable. Not specified by the calling model. See [optional_env_var](#optional_env_var) below.
+- `description` (optional): description of the parameter
+- `default` (optional): Default value for the parameter if not passed
+
+### Tool Parameter Examples
+
+#### project_file_path
+
+This parameter type ensures security by validating that path parameter is within the project boundaries:
+
+```yaml
+- name: "test_file"
+  description: "Run tests in a specific file"
+  command: "python -m pytest $TEST_FILE"
+  parameters:
+    - name: "TEST_FILE"
+      type: "project_file_path"
+      description: "Path to test file"
+      default: "./tests"
+```
+
+#### insecure_string
+
+Allows any string input from the agent without validation. Use with caution:
+
+```yaml
+- name: "grep_code"
+  description: "Search code for pattern"
+  command: "grep -r $PATTERN src/"
+  parameters:
+    - name: "PATTERN"
+      type: "insecure_string"
+      description: "Pattern to search for"
+```
+
+#### required_env_var
+
+This is a tool paremeter expected to exist as an environment variable. The server will fail to start if the environment is missing this var. 
+
+This is useful for sepcifing that a secret (eg API key) is needed, without checking the value into your repository. Typically setup when you configure your MCP server (in `mcp.json` and similar). When trying to set up the MCP server, it will output a user friendly message informing the user they need to add the env var to continue.
+
+HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
+
+This can not be passed by the calling model.
+
+```yaml
+- name: "deploy"
+  description: "Deploy the application"
+  command: "deploy-tool --key=$DEPLOY_KEY"
+  parameters:
+    - name: "DEPLOY_KEY"
+      type: "required_env_var"
+      description: "Deployment key for the service"
+```
+
+#### optional_env_var
+
+Similar to `required_env_var` but optional. The server will not error on startup if this is missing.
+
+```yaml
+- name: "build"
+  description: "Build the application"
+  command: "build-tool"
+  parameters:
+    - name: "BUILD_FLAGS"
+      type: "optional_env_var"
+      description: "Additional build flags"
+```
 
 ### Prompt Fields
 
@@ -165,69 +230,6 @@ get_prompt_tool_filter:
 
 ```yaml
 get_prompt_tool_filter: []
-```
-
-## Running HooksMCP
-
-### project_file_path
-
-This parameter type ensures security by validating that paths are within the project boundaries:
-
-```yaml
-- name: "test_file"
-  description: "Run tests in a specific file"
-  command: "python -m pytest $TEST_FILE"
-  parameters:
-    - name: "TEST_FILE"
-      type: "project_file_path"
-      description: "Path to test file"
-      default: "./tests"
-```
-
-The server will validate that `TEST_FILE` is within the project and exists.
-
-### required_env_var
-
-These parameters must be set in the environment before starting the server. If they are not set, the server will fail on startup asking the user to set the variables.
-
-```yaml
-- name: "deploy"
-  description: "Deploy the application"
-  command: "deploy-tool --key=$DEPLOY_KEY"
-  parameters:
-    - name: "DEPLOY_KEY"
-      type: "required_env_var"
-      description: "Deployment key for the service"
-```
-
-HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
-
-### optional_env_var
-
-Similar to `required_env_var` but optional:
-
-```yaml
-- name: "build"
-  description: "Build the application"
-  command: "build-tool"
-  parameters:
-    - name: "BUILD_FLAGS"
-      type: "optional_env_var"
-      description: "Additional build flags"
-```
-
-### insecure_string
-
-Allows any string input from the coding assistant without validation. Use with caution:
-
-```yaml
-- name: "grep_code"
-  description: "Search code for pattern"
-  command: "grep -r $PATTERN src/"
-  parameters:
-    - name: "PATTERN"
-      type: "insecure_string"
-      description: "Pattern to search for"
 ```
 
 ## Running HooksMCP
