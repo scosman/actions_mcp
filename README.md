@@ -33,7 +33,7 @@
 uv tool install hooks-mcp
 ```
 
-2. Create an [`hooks_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools. For example:
+2. Create an [`hooks_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools and prompts. For example:
 
 ```yaml
 actions:
@@ -56,6 +56,12 @@ actions:
       - name: "TEST_PATH"
         type: "project_file_path"
         description: "Path to test file or directory"
+
+prompts:
+  - name: "test_guide.md"
+    description: "Guide for testing best practices in this library"
+    prompt-file: "agents/test_guide.md"
+
 ```
 
 3. Run the server:
