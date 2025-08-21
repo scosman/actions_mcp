@@ -225,7 +225,7 @@ Each prompt in the `prompts` array can have the following fields:
 - `description` (required): description of what the prompt does (max 256 characters)
 - `prompt` (optional): Inline prompt text content. Either `prompt` or `prompt-file` must be specified.
 - `prompt-file` (optional): Relative path to a file containing the prompt text content. Either `prompt` or `prompt-file` must be specified.
-- `arguments` (optional): Definitions of each argument used in the prompt. See `Prompt Argument Fields` below for structure.
+- [`arguments`](#prompt-argument-fields) (optional): Definitions of each argument used in the prompt.
 
 #### Prompt Argument Fields
 
