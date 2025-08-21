@@ -4,7 +4,7 @@
   </picture>
 </p>
 <h3 align="center">
-  One YAML to create a MCP server for your lint/test/build/format commands. 
+  One YAML to create a MCP server for your lint/test/build commands and prompts
 </h3>
 
 ## Overview
@@ -13,9 +13,10 @@
 2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
 3. **Improved security:** limit which commands agents can run. Validate the arguments agents generate (e.g. ensure a file path is inside the project).
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **Speed:** using MCP unlocks parallel execution, requires fewer tokens for generating commands, and eliminates errors in commands requiring iteration.
-6. **Collaboration**: Check in the YAML file to share with your team.
-7. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
+5. **Prompt Library** provide access to shared prompts in a standard way. Solves that Cursor/Cline/Codex all have different search paths/filenames.
+6. **Speed:** using MCP unlocks parallel execution, requires fewer tokens for generating commands, and eliminates errors in commands requiring iteration.
+7. **Collaboration**: Check in the YAML file to share with your team.
+8. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 <p align="center">
 <img width="293" height="299" alt="Screenshot 2025-08-05 at 12 08 20 AM" src="https://github.com/user-attachments/assets/b7352ab4-d212-45f0-8267-67bc7209eb5b" />
@@ -31,7 +32,7 @@
 uv tool install hooks-mcp
 ```
 
-2. Create an [`hooks_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools. For example:
+2. Create an [`hooks_mcp.yaml`](#configuration-file-specification) file in your project root defining your tools and prompts. For example:
 
 ```yaml
 actions:
@@ -54,113 +55,18 @@ actions:
       - name: "TEST_PATH"
         type: "project_file_path"
         description: "Path to test file or directory"
+
+prompts:
+  - name: "test_guide.md"
+    description: "Guide for testing best practices in this library"
+    prompt-file: "agents/test_guide.md"
+
 ```
 
 3. Run the server:
 
 ```bash
 uvx hooks-mcp
-```
-
-See [running HooksMCP](#running-hooksmcp) for more runtime options, including how to run in Cursor, Windsurf, etc.
-
-## Configuration File Specification
-
-The `hooks_mcp.yaml` file defines the tools that will be exposed through the MCP server.
-
-See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
-
-### Top-level Fields
-
-- `server_name` (optional): Name of the MCP server (default: "HooksMCP")
-- `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
-- `actions` (required): Array of action definitions
-
-### Action Fields
-
-Each action in the `actions` array can have the following fields:
-
-- `name` (required): Unique identifier for the tool
-- `description` (required): Human-readable description of what the tool does
-- `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
-- `parameters` (optional): Definitions of each parameter used in the command. 
-- `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
-- `timeout` (optional): Timeout in seconds for command execution (default: 60 seconds)
-
-### Parameter Fields
-
-Each parameter in an action's `parameters` array can have the following fields:
-
-- `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
-- `type` (required): One of the following parameter types:
-  - `project_file_path`: A local path within the project, relative to project root. Validated to ensure it's within project boundaries and exists.
-  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model. 
-  - `optional_env_var`: An optional environment variable. Not specified by the calling model.
-  - `insecure_string`: Any string from the model. No validation. Use with caution.
-- `description` (optional): Human-readable description of the parameter
-- `default` (optional): Default value for the parameter
-
-## Parameter Types Explained
-
-### project_file_path
-
-This parameter type ensures security by validating that paths are within the project boundaries:
-
-```yaml
-- name: "test_file"
-  description: "Run tests in a specific file"
-  command: "python -m pytest $TEST_FILE"
-  parameters:
-    - name: "TEST_FILE"
-      type: "project_file_path"
-      description: "Path to test file"
-      default: "./tests"
-```
-
-The server will validate that `TEST_FILE` is within the project and exists.
-
-### required_env_var
-
-These parameters must be set in the environment before starting the server. If they are not set, the server will fail on startup asking the user to set the variables.
-
-```yaml
-- name: "deploy"
-  description: "Deploy the application"
-  command: "deploy-tool --key=$DEPLOY_KEY"
-  parameters:
-    - name: "DEPLOY_KEY"
-      type: "required_env_var"
-      description: "Deployment key for the service"
-```
-
-HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
-
-### optional_env_var
-
-Similar to `required_env_var` but optional:
-
-```yaml
-- name: "build"
-  description: "Build the application"
-  command: "build-tool"
-  parameters:
-    - name: "BUILD_FLAGS"
-      type: "optional_env_var"
-      description: "Additional build flags"
-```
-
-### insecure_string
-
-Allows any string input from the coding assistant without validation. Use with caution:
-
-```yaml
-- name: "grep_code"
-  description: "Search code for pattern"
-  command: "grep -r $PATTERN src/"
-  parameters:
-    - name: "PATTERN"
-      type: "insecure_string"
-      description: "Pattern to search for"
 ```
 
 ## Running HooksMCP
@@ -176,6 +82,7 @@ uvx hooks-mcp
 
 Optional command line arguments include:
  - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
+ - `--disable-prompt-tool`: Disable the `get_prompt` tool entirely, similar to setting `get_prompt_tool_filter` to an empty array.
  - The last argument is the path to the `hooks_mcp.yaml` file, if not using the default `./hooks_mcp.yaml`
 
 ### Running with Coding Assistants
@@ -203,6 +110,166 @@ Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/c
     ]
   }
 }
+```
+
+## Configuration File Specification
+
+The `hooks_mcp.yaml` file defines the tools that will be exposed through the MCP server.
+
+See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
+
+### Top-level Fields
+
+- `server_name` (optional): Name of the MCP server (default: "HooksMCP")
+- `server_description` (optional): Description of the MCP server (default: "Project-specific development tools and prompts exposed via MCP")
+- [`actions`](#action-fields) (optional): Array of action definitions. If not provided, only prompts will be available.
+- [`prompts`](#prompt-fields) (optional): Array of prompt definitions
+- [`get_prompt_tool_filter`](#how-prompts-are-exposed-via-mcp) (optional): Array of prompt names to expose via the `get_prompt` tool. If unset, all prompts are exposed. If empty, the `get_prompt` tool is not exposed.
+
+### Action Fields
+
+Each action in the `actions` array can have the following fields:
+
+- `name` (required): Unique identifier for the tool
+- `description` (required): Human-readable description of what the tool does
+- `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
+- [`parameters`](#action-parameter-fields) (optional): Definitions of each parameter used in the command.
+- `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
+- `timeout` (optional): Timeout in seconds for command execution (default: 60 seconds)
+
+### Action Parameter Fields
+
+Each parameter in an action's `parameters` array can have the following fields:
+
+- `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
+- `type` (required): One of the following parameter types:
+  - [`project_file_path`](#project_file_path): A local path within the project, relative to project root.
+  - [`insecure_string`](#insecure_string): Any string from the model. No validation. Use with caution. 
+  - [`required_env_var`](#required_env_var): An environment variable that must be set before the server starts. 
+  - [`optional_env_var`](#optional_env_var) : An optional environment variable. Not specified by the calling model.
+- `description` (optional): description of the parameter
+- `default` (optional): Default value for the parameter if not passed
+
+### Tool Parameter Examples
+
+#### project_file_path
+
+This parameter type ensures security by validating that the path parameter is within the project boundaries:
+
+```yaml
+- name: "test_file"
+  description: "Run tests in a specific file"
+  command: "python -m pytest $TEST_FILE"
+  parameters:
+    - name: "TEST_FILE"
+      type: "project_file_path"
+      description: "Path to test file"
+      default: "./tests"
+```
+
+#### insecure_string
+
+Allows any string input from the agent without validation. Use with caution:
+
+```yaml
+- name: "grep_code"
+  description: "Search code for pattern"
+  command: "grep -r $PATTERN src/"
+  parameters:
+    - name: "PATTERN"
+      type: "insecure_string"
+      description: "Pattern to search for"
+```
+
+#### required_env_var
+
+This is a tool parameter expected to exist as an environment variable. The server will fail to start if the environment is missing this var.
+
+This is useful for specifying that a secret (e.g., API key) is needed, without checking the value into your repository. Typically set up when you configure your MCP server (in `mcp.json` and similar). When trying to set up the MCP server, it will output a user‑friendly message informing the user they need to add the env var to continue.
+
+HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
+
+This cannot be passed by the calling model.
+
+```yaml
+- name: "deploy"
+  description: "Deploy the application"
+  command: "deploy-tool --key=$DEPLOY_KEY"
+  parameters:
+    - name: "DEPLOY_KEY"
+      type: "required_env_var"
+      description: "Deployment key for the service"
+```
+
+#### optional_env_var
+
+Similar to `required_env_var` but optional. The server will not error on startup if this is missing.
+
+```yaml
+- name: "build"
+  description: "Build the application"
+  command: "build-tool"
+  parameters:
+    - name: "BUILD_FLAGS"
+      type: "optional_env_var"
+      description: "Additional build flags"
+```
+
+### Prompt Fields
+
+HooksMCP can be used to share prompts. For example, a "test_guide" prompt explaining preferred test libraries and best practices for tests.
+
+Each prompt in the `prompts` array can have the following fields:
+
+- `name` (required): Unique identifier for the prompt (max 32 characters)
+- `description` (required): description of what the prompt does (max 256 characters)
+- `prompt` (optional): Inline prompt text content. Either `prompt` or `prompt-file` must be specified.
+- `prompt-file` (optional): Relative path to a file containing the prompt text content. Either `prompt` or `prompt-file` must be specified.
+- [`arguments`](#prompt-argument-fields) (optional): Definitions of each argument used in the prompt.
+
+#### Prompt Argument Fields
+
+Each argument in a prompt's `arguments` array can have the following fields:
+
+- `name` (required): The argument name
+- `description` (optional): description of the argument
+- `required` (optional): Boolean indicating if the argument is required (default: false)
+
+To add a prompt in your template, include it in double curly brackets: `{{CODE_SNIPPET}}`
+
+#### Prompt Examples
+
+Prompts can be defined inline or loaded from files:
+
+```yaml
+prompts:
+  - name: "code_review"
+    description: "Review code for best practices and potential bugs"
+    prompt: "Please review this code for best practices and potential bugs:\n\n$CODE_SNIPPET"
+    arguments:
+      - name: "CODE_SNIPPET"
+        description: "The code to review"
+        required: true
+
+  - name: "architecture_review"
+    description: "Review system architecture decisions"
+    prompt-file: "./prompts/architecture_review.md"
+```
+
+#### How Prompts are Exposed via MCP
+
+The MCP protocol supports prompts natively; HooksMCP will provide prompts through the official protocol.
+
+However, many clients only support MCP for tool calls. They either completely ignore prompts, or only expose prompts via a dropdown requiring manual human selection. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name. **Note**: the get_prompt tool does not support argument substitution. The model will have to infer how to use the prompt from it's template.
+
+To disable the `get_prompt` tool you can set:
+1. Use the `--disable-prompt-tool` CLI argument. This is local to each user.
+2. set `get_prompt_tool_filter` in the yaml to limit which prompts are exposed, with an empty list disabling the tool. This is for all users.
+
+```yaml
+get_prompt_tool_filter:
+  - "code_review"
+  - "architecture_review"
 ```
 
 ## Security Features
