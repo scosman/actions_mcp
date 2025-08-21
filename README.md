@@ -245,7 +245,7 @@ Prompts can be defined inline or loaded from files:
 prompts:
   - name: "code_review"
     description: "Review code for best practices and potential bugs"
-    prompt: "Please review this code for best practices and potential bugs:\n\n$CODE_SNIPPET"
+    prompt: "Please review this code for best practices and potential bugs:\n\n{{CODE_SNIPPET}}"
     arguments:
       - name: "CODE_SNIPPET"
         description: "The code to review"
