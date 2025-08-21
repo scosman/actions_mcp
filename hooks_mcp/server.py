@@ -219,6 +219,23 @@ async def serve(
                     "HooksMCP Error: 'prompt_name' argument is required for get_prompt tool"
                 )
 
+            # Enforce get_prompt_tool_filter if present
+            if hooks_mcp_config.get_prompt_tool_filter is not None:
+                # If filter is empty, don't allow any prompts (shouldn't happen since tool isn't exposed)
+                if not hooks_mcp_config.get_prompt_tool_filter:
+                    raise ExecutionError(
+                        "HooksMCP Error: No prompts are available through get_prompt tool"
+                    )
+                # Otherwise, check if prompt is in the filter list
+                if prompt_name not in hooks_mcp_config.get_prompt_tool_filter:
+                    available_prompts = ", ".join(
+                        hooks_mcp_config.get_prompt_tool_filter
+                    )
+                    raise ExecutionError(
+                        f"HooksMCP Error: Prompt '{prompt_name}' is not available through get_prompt tool. "
+                        f"Available prompts: {available_prompts}"
+                    )
+
             # Find the prompt by name
             config_prompt = next(
                 (p for p in hooks_mcp_config.prompts if p.name == prompt_name), None

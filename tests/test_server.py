@@ -962,6 +962,291 @@ class TestServe:
             == "Please analyze the following code:\ndef hello_world():\n    print('Hello, World!')\nProvide feedback."
         )
 
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_call_tool_handler_get_prompt_with_filter_success(
+        self, mock_executor_class, mock_server_class, mock_stdio_server
+    ):
+        """Test successful get_prompt tool execution with filter."""
+        # Setup config with prompts and filter
+        prompt1 = ConfigPrompt(
+            name="allowed_prompt",
+            description="An allowed prompt",
+            prompt_text="This prompt is allowed",
+        )
+        prompt2 = ConfigPrompt(
+            name="filtered_prompt",
+            description="A filtered out prompt",
+            prompt_text="This prompt is filtered out",
+        )
+        action = Action(
+            name="test_action", description="Test action", command="echo hello"
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1, prompt2],
+            get_prompt_tool_filter=["allowed_prompt"],
+        )
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        mock_executor = MagicMock()
+        mock_executor_class.return_value = mock_executor
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(config, mock_config_path))
+
+        # Test the call_tool handler with get_prompt for an allowed prompt
+        result = asyncio.run(
+            registered_handlers["call_tool"](
+                "get_prompt", {"prompt_name": "allowed_prompt"}
+            )
+        )
+
+        # Verify result format
+        assert len(result) == 1
+        assert result[0].type == "text"
+        assert result[0].text == "This prompt is allowed"
+
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_call_tool_handler_get_prompt_filtered_out(
+        self, mock_executor_class, mock_server_class, mock_stdio_server
+    ):
+        """Test get_prompt tool execution with filtered out prompt."""
+        # Setup config with prompts and filter
+        prompt1 = ConfigPrompt(
+            name="allowed_prompt",
+            description="An allowed prompt",
+            prompt_text="This prompt is allowed",
+        )
+        prompt2 = ConfigPrompt(
+            name="filtered_prompt",
+            description="A filtered out prompt",
+            prompt_text="This prompt is filtered out",
+        )
+        action = Action(
+            name="test_action", description="Test action", command="echo hello"
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1, prompt2],
+            get_prompt_tool_filter=["allowed_prompt"],
+        )
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        mock_executor = MagicMock()
+        mock_executor_class.return_value = mock_executor
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(config, mock_config_path))
+
+        # Test the call_tool handler with get_prompt for a filtered out prompt
+        with pytest.raises(ExecutionError) as exc_info:
+            asyncio.run(
+                registered_handlers["call_tool"](
+                    "get_prompt", {"prompt_name": "filtered_prompt"}
+                )
+            )
+
+        assert (
+            "Prompt 'filtered_prompt' is not available through get_prompt tool"
+            in str(exc_info.value)
+        )
+        assert "allowed_prompt" in str(
+            exc_info.value
+        )  # Should mention available prompts
+
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_call_tool_handler_get_prompt_empty_filter(
+        self, mock_executor_class, mock_server_class, mock_stdio_server
+    ):
+        """Test get_prompt tool execution when filter is empty."""
+        # Setup config with prompts and empty filter
+        prompt1 = ConfigPrompt(
+            name="any_prompt",
+            description="Any prompt",
+            prompt_text="This prompt should not be accessible",
+        )
+        action = Action(
+            name="test_action", description="Test action", command="echo hello"
+        )
+        config = HooksMCPConfig(
+            server_name="TestServer",
+            server_description="Test Description",
+            actions=[action],
+            prompts=[prompt1],
+            get_prompt_tool_filter=[],
+        )
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        mock_executor = MagicMock()
+        mock_executor_class.return_value = mock_executor
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(config, mock_config_path))
+
+        # Test the call_tool handler with get_prompt (should fail since filter is empty)
+        with pytest.raises(ExecutionError) as exc_info:
+            asyncio.run(
+                registered_handlers["call_tool"](
+                    "get_prompt", {"prompt_name": "any_prompt"}
+                )
+            )
+
+        assert "No prompts are available through get_prompt tool" in str(exc_info.value)
+
 
 class TestMain:
     """Test the main function."""
