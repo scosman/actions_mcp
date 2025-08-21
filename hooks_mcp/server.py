@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
+import tomllib
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
@@ -332,10 +333,30 @@ async def serve(
         )
 
 
+def get_version() -> str:
+    """Get the version from pyproject.toml file."""
+    try:
+        with open("pyproject.toml", "rb") as f:
+            data = tomllib.load(f)
+            version = data["project"]["version"]
+            return f"hooks-mcp {version}"
+    except Exception:
+        # Fallback to a default version if we can't read it
+        return "hooks-mcp: cannot load version"
+
+
 def main() -> None:
     """Main entry point for the HooksMCP server."""
     parser = argparse.ArgumentParser(
-        description="HooksMCP - MCP server for project-specific development tools and prompts"
+        description="HooksMCP - MCP server for project-specific development tools and prompts",
+        epilog="For more information, visit: https://github.com/scosman/hooks_mcp",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=get_version(),
+        help="Show the library version",
     )
     parser.add_argument(
         "config_path",
