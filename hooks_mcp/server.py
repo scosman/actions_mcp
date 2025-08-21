@@ -309,7 +309,7 @@ async def serve(
 def main() -> None:
     """Main entry point for the HooksMCP server."""
     parser = argparse.ArgumentParser(
-        description="HooksMCP - MCP server for project-specific development tools"
+        description="HooksMCP - MCP server for project-specific development tools and prompts"
     )
     parser.add_argument(
         "config_path",

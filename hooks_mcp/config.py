@@ -259,7 +259,8 @@ class HooksMCPConfig:
         self.get_prompt_tool_filter = get_prompt_tool_filter
         self.server_name = server_name or "HooksMCP"
         self.server_description = (
-            server_description or "Project-specific development tools exposed via MCP"
+            server_description
+            or "Project-specific development tools and prompts exposed via MCP"
         )
 
         # Validate get_prompt_tool_filter if provided

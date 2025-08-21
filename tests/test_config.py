@@ -30,7 +30,7 @@ actions:
         assert config.server_name == "HooksMCP"
         assert (
             config.server_description
-            == "Project-specific development tools exposed via MCP"
+            == "Project-specific development tools and prompts exposed via MCP"
         )
         assert len(config.actions) == 1
 
@@ -736,7 +736,7 @@ prompts:
         assert config.server_name == "HooksMCP"
         assert (
             config.server_description
-            == "Project-specific development tools exposed via MCP"
+            == "Project-specific development tools and prompts exposed via MCP"
         )
         assert len(config.actions) == 0
         assert len(config.prompts) == 2
