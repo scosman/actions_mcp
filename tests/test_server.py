@@ -870,6 +870,98 @@ class TestServe:
 
         assert "Prompt 'nonexistent_prompt' not found" in str(exc_info.value)
 
+    @patch("hooks_mcp.server.stdio_server")
+    @patch("hooks_mcp.server.Server")
+    @patch("hooks_mcp.server.CommandExecutor")
+    def test_get_prompt_handler_with_argument_substitution(
+        self, mock_executor_class, mock_server_class, mock_stdio_server, mock_config
+    ):
+        """Test prompt retrieval with argument substitution via MCP protocol."""
+        # Add a prompt with template variables to the mock config
+        prompt_arg = ConfigPromptArgument(
+            name="CODE_SNIPPET",
+            description="Code to analyze",
+            required=True,
+        )
+        prompt = ConfigPrompt(
+            name="code_analysis",
+            description="Analyze code",
+            prompt_text="Please analyze the following code:\n{{CODE_SNIPPET}}\nProvide feedback.",
+            arguments=[prompt_arg],
+        )
+        mock_config.prompts = [prompt]
+
+        # Setup mocks
+        mock_stdio_server.return_value.__aenter__.return_value = (
+            MagicMock(),
+            MagicMock(),
+        )
+        mock_server = MagicMock()
+        mock_server.create_initialization_options.return_value = {}
+        mock_server.run = AsyncMock()
+        mock_server_class.return_value = mock_server
+
+        # Capture handlers
+        registered_handlers = {}
+
+        def capture_list_tools():
+            def decorator(func):
+                registered_handlers["list_tools"] = func
+                return func
+
+            return decorator
+
+        def capture_call_tool():
+            def decorator(func):
+                registered_handlers["call_tool"] = func
+                return func
+
+            return decorator
+
+        def capture_list_prompts():
+            def decorator(func):
+                registered_handlers["list_prompts"] = func
+                return func
+
+            return decorator
+
+        def capture_get_prompt():
+            def decorator(func):
+                registered_handlers["get_prompt"] = func
+                return func
+
+            return decorator
+
+        mock_server.list_tools = capture_list_tools
+        mock_server.call_tool = capture_call_tool
+        mock_server.list_prompts = capture_list_prompts
+        mock_server.get_prompt = capture_get_prompt
+
+        # Create a mock config path
+        mock_config_path = Path(".")
+
+        # Run serve to register handlers
+        asyncio.run(serve(mock_config, mock_config_path))
+
+        # Test the get_prompt handler with arguments - this should now work correctly
+        result = asyncio.run(
+            registered_handlers["get_prompt"](
+                "code_analysis",
+                {"CODE_SNIPPET": "def hello_world():\n    print('Hello, World!')"},
+            )
+        )
+
+        # Verify that the prompt content has been properly substituted
+        assert "{{CODE_SNIPPET}}" not in result.messages[0].content.text
+        assert (
+            "def hello_world():\n    print('Hello, World!')"
+            in result.messages[0].content.text
+        )
+        assert (
+            result.messages[0].content.text
+            == "Please analyze the following code:\ndef hello_world():\n    print('Hello, World!')\nProvide feedback."
+        )
+
 
 class TestMain:
     """Test the main function."""

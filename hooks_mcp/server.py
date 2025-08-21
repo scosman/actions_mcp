@@ -280,6 +280,15 @@ async def serve(
             # Get prompt content
             prompt_content = get_prompt_content(config_prompt, config_path)
 
+            # Substitute arguments if provided
+            if arguments:
+                # Use simple string replacement for {{variable}} templates
+                for arg_name, arg_value in arguments.items():
+                    template_var = f"{{{{{arg_name}}}}}"
+                    prompt_content = prompt_content.replace(
+                        template_var, str(arg_value)
+                    )
+
             # Return as GetPromptResult
             return GetPromptResult(
                 description=config_prompt.description,
