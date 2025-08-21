@@ -4,7 +4,7 @@
   </picture>
 </p>
 <h3 align="center">
-  One YAML to create a MCP server for your lint/test/build/format commands. 
+  One YAML to create a MCP server for your lint/test/build commands and prompts
 </h3>
 
 ## Overview
@@ -13,9 +13,10 @@
 2. **Tool discovery:** coding agents know which dev-tools are available and the exact arguments they require. No more guessing CLI strings.
 3. **Improved security:** limit which commands agents can run. Validate the arguments agents generate (e.g. ensure a file path is inside the project).
 4. **Works anywhere MCP works:** Cursor, Windsurf, Cline, etc
-5. **Speed:** using MCP unlocks parallel execution, requires fewer tokens for generating commands, and eliminates errors in commands requiring iteration.
-6. **Collaboration**: Check in the YAML file to share with your team.
-7. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
+5. **Prompt Library** provide access to shared prompts in a standard way. Solves that Cursor/Cline/Codex all have different search paths/filenames.
+6. **Speed:** using MCP unlocks parallel execution, requires fewer tokens for generating commands, and eliminates errors in commands requiring iteration.
+7. **Collaboration**: Check in the YAML file to share with your team.
+8. **And more:** strip ANSI codes/control characters, `.env` file loading, define required secrets without checking them in, supports exit codes/stdout/stderr, etc
 
 <p align="center">
 <img width="293" height="299" alt="Screenshot 2025-08-05 at 12 08 20 AM" src="https://github.com/user-attachments/assets/b7352ab4-d212-45f0-8267-67bc7209eb5b" />
@@ -91,42 +92,44 @@ Each action in the `actions` array can have the following fields:
 - `name` (required): Unique identifier for the tool
 - `description` (required): Human-readable description of what the tool does
 - `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
-- `parameters` (optional): Definitions of each parameter used in the command. 
+- `parameters` (optional): Definitions of each parameter used in the command. See `Action Parameter Fields` below for structure.
 - `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
 - `timeout` (optional): Timeout in seconds for command execution (default: 60 seconds)
 
-### Parameter Fields
+### Action Parameter Fields
 
 Each parameter in an action's `parameters` array can have the following fields:
 
 - `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
 - `type` (required): One of the following parameter types:
   - `project_file_path`: A local path within the project, relative to project root. Validated to ensure it's within project boundaries and exists.
-  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model. 
-  - `optional_env_var`: An optional environment variable. Not specified by the calling model.
   - `insecure_string`: Any string from the model. No validation. Use with caution.
+  - `required_env_var`: An environment variable that must be set before the server starts. Not specified by the calling model. The server will fail to start if the environment is missing this var. Useful for sepcifing that a secret (API key) is needed, without checking the value into your repository. Typically setup when you configure your MCP server (in `mcp.json` and similar).
+  - `optional_env_var`: An optional environment variable. Not specified by the calling model. Server will not error on startup if this is missing.
 - `description` (optional): Human-readable description of the parameter
 - `default` (optional): Default value for the parameter
 
 ### Prompt Fields
 
+HooksMCP can be used to share prompts. For example a "test_guide" prompt explaning preferred test libraries and best practices for tests.
+
 Each prompt in the `prompts` array can have the following fields:
 
 - `name` (required): Unique identifier for the prompt (max 32 characters)
-- `description` (required): Human-readable description of what the prompt does (max 256 characters)
+- `description` (required): description of what the prompt does (max 256 characters)
 - `prompt` (optional): Inline prompt text content. Either `prompt` or `prompt-file` must be specified.
 - `prompt-file` (optional): Relative path to a file containing the prompt text content. Either `prompt` or `prompt-file` must be specified.
-- `arguments` (optional): Definitions of each argument used in the prompt.
+- `arguments` (optional): Definitions of each argument used in the prompt. See `Prompt Argument Fields` below for structure.
 
-### Prompt Argument Fields
+#### Prompt Argument Fields
 
 Each argument in a prompt's `arguments` array can have the following fields:
 
 - `name` (required): The argument name
-- `description` (optional): Human-readable description of the argument
+- `description` (optional): description of the argument
 - `required` (optional): Boolean indicating if the argument is required (default: false)
 
-### Prompt Examples
+#### Prompt Examples
 
 Prompts can be defined inline or loaded from files:
 
@@ -145,7 +148,13 @@ prompts:
     prompt-file: "./prompts/architecture_review.md"
 ```
 
-The `get_prompt` tool is automatically exposed when prompts are defined, allowing coding agents to retrieve prompt content by name:
+#### How Prompts are Exposed via MCP
+
+The MCP protocol supports prompts natively, and HooksMCP will provide prompts through the offical protocol.
+
+However, many clients only support MCP for tools. They either completely ignore prompts, or only expose prompts to manual user requests via a dropdown without allowing the agent to request a prompt. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name.
+
+To disable the `get_prompt` tool you can set the `--disable-prompt-tool` CLI argument or set `get_prompt_tool_filter` to limit which prompts are exposed (with an empty list disabling the tool):
 
 ```yaml
 get_prompt_tool_filter:
@@ -153,7 +162,6 @@ get_prompt_tool_filter:
   - "architecture_review"
 ```
 
-To disable the `get_prompt` tool entirely, set `get_prompt_tool_filter` to an empty array:
 
 ```yaml
 get_prompt_tool_filter: []
