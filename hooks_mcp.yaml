@@ -1,5 +1,10 @@
 # HooksMCP Configuration File for use with the hooks-mcp repo!
 
+prompts:
+  - name: "test_guide.md"
+    description: "Guide for testing best practices in this library"
+    prompt-file: "agents/test_guide.md"
+
 actions:
   - name: "all_tests"
     description: "Run all tests in the project"
