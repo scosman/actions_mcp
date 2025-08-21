@@ -69,7 +69,48 @@ prompts:
 uvx hooks-mcp
 ```
 
-See [running HooksMCP](#running-hooksmcp) for more runtime options, including how to run in Cursor, Windsurf, etc.
+## Running HooksMCP
+
+We recommend running HooksMCP with [uvx](https://docs.astral.sh/uv/concepts/tools/):
+
+```bash
+# Install
+uv tool install hooks-mcp
+# Run
+uvx hooks-mcp 
+```
+
+Optional command line arguments include:
+ - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
+ - `--disable-prompt-tool`: Disable the `get_prompt` tool entirely, similar to setting `get_prompt_tool_filter` to an empty array.
+ - The last argument is the path to the `hooks_mcp.yaml` file, if not using the default `./hooks_mcp.yaml`
+
+### Running with Coding Assistants
+
+#### Cursor
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ%3D%3D)
+
+Or open [this cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ).
+
+#### Windsurf/VSCode/etc
+
+Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server-to-your-workspace). Create an entry for HooksMCP.
+
+**Note:** Be sure it's run from the root of your project, or manually pass the working directory on startup:
+
+```json
+{
+  "HooksMCP": {
+    "command": "uvx",
+    "args": [
+      "hooks-mcp",
+      "--working-directory",
+      "."
+    ]
+  }
+}
+```
 
 ## Configuration File Specification
 
@@ -80,10 +121,10 @@ See this project's [hooks_mcp.yaml](./hooks_mcp.yaml) as an example.
 ### Top-level Fields
 
 - `server_name` (optional): Name of the MCP server (default: "HooksMCP")
-- `server_description` (optional): Description of the MCP server (default: "Project-specific development tools exposed via MCP")
-- `actions` (optional): Array of action definitions. If not provided, only prompts will be available.
-- `prompts` (optional): Array of prompt definitions
-- `get_prompt_tool_filter` (optional): Array of prompt names to expose via the `get_prompt` tool. If unset, all prompts are exposed. If empty, the `get_prompt` tool is not exposed.
+- `server_description` (optional): Description of the MCP server (default: "Project-specific development tools and prompts exposed via MCP")
+- [`actions`](#action-fields) (optional): Array of action definitions. If not provided, only prompts will be available.
+- [`prompts`](#prompt-fields) (optional): Array of prompt definitions
+- [`get_prompt_tool_filter`](#how-prompts-are-exposed-via-mcp) (optional): Array of prompt names to expose via the `get_prompt` tool. If unset, all prompts are exposed. If empty, the `get_prompt` tool is not exposed.
 
 ### Action Fields
 
@@ -92,7 +133,7 @@ Each action in the `actions` array can have the following fields:
 - `name` (required): Unique identifier for the tool
 - `description` (required): Human-readable description of what the tool does
 - `command` (required): The CLI command to execute. May include dynamic parameters like `$TEST_FILE_PATH`.
-- `parameters` (optional): Definitions of each parameter used in the command. See `Action Parameter Fields` below for structure.
+- [`parameters`](#action-parameter-fields) (optional): Definitions of each parameter used in the command.
 - `run_path` (optional): Relative path from project root where the command should be executed. Useful for mono-repos.
 - `timeout` (optional): Timeout in seconds for command execution (default: 60 seconds)
 
@@ -102,10 +143,10 @@ Each parameter in an action's `parameters` array can have the following fields:
 
 - `name` (required): The parameter name to substitute into the command. For example `TEST_FILE_PATH`.
 - `type` (required): One of the following parameter types:
-  - `project_file_path`: A local path within the project, relative to project root. See [project_file_path](#project_file_path) below.
-  - `insecure_string`: Any string from the model. No validation. Use with caution. See [insecure_string](#insecure_string) below.
-  - `required_env_var`: An environment variable that must be set before the server starts. See [required_env_var](#required_env_var) below.
-  - `optional_env_var`: An optional environment variable. Not specified by the calling model. See [optional_env_var](#optional_env_var) below.
+  - [`project_file_path`](#project_file_path): A local path within the project, relative to project root.
+  - [`insecure_string`](#insecure_string): Any string from the model. No validation. Use with caution. 
+  - [`required_env_var`](#required_env_var): An environment variable that must be set before the server starts. 
+  - [`optional_env_var`](#optional_env_var) : An optional environment variable. Not specified by the calling model.
 - `description` (optional): description of the parameter
 - `default` (optional): Default value for the parameter if not passed
 
@@ -215,64 +256,18 @@ prompts:
 
 #### How Prompts are Exposed via MCP
 
-The MCP protocol supports prompts natively, and HooksMCP will provide prompts through the offical protocol.
+The MCP protocol supports prompts natively and HooksMCP will provide prompts through the offical protocol.
 
-However, many clients only support MCP for tools. They either completely ignore prompts, or only expose prompts to manual user requests via a dropdown without allowing the agent to request a prompt. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name.
+However, many clients only support MCP for tool calls. They either completely ignore prompts, or only expose prompts via a dropdown requiring manual human selection. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name.
 
-To disable the `get_prompt` tool you can set the `--disable-prompt-tool` CLI argument or set `get_prompt_tool_filter` to limit which prompts are exposed (with an empty list disabling the tool):
+To disable the `get_prompt` tool you can set:
+1. Use the `--disable-prompt-tool` CLI argument. This is local to each user.
+2. set `get_prompt_tool_filter` in the yaml to limit which prompts are exposed, with an empty list disabling the tool. This is for all users.
 
 ```yaml
 get_prompt_tool_filter:
   - "code_review"
   - "architecture_review"
-```
-
-
-```yaml
-get_prompt_tool_filter: []
-```
-
-## Running HooksMCP
-
-We recommend running HooksMCP with [uvx](https://docs.astral.sh/uv/concepts/tools/):
-
-```bash
-# Install
-uv tool install hooks-mcp
-# Run
-uvx hooks-mcp 
-```
-
-Optional command line arguments include:
- - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
- - `--disable-prompt-tool`: Disable the `get_prompt` tool entirely, similar to setting `get_prompt_tool_filter` to an empty array.
- - The last argument is the path to the `hooks_mcp.yaml` file, if not using the default `./hooks_mcp.yaml`
-
-### Running with Coding Assistants
-
-#### Cursor
-
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ%3D%3D)
-
-Or open [this cursor deeplink](cursor://anysphere.cursor-deeplink/mcp/install?name=HooksMCP&config=eyJjb21tYW5kIjoidXZ4IGhvb2tzLW1jcCAtLXdvcmtpbmctZGlyZWN0b3J5IC4ifQ).
-
-#### Windsurf/VSCode/etc
-
-Most other IDEs use a variant of [mcp.json](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server-to-your-workspace). Create an entry for HooksMCP.
-
-**Note:** Be sure it's run from the root of your project, or manually pass the working directory on startup:
-
-```json
-{
-  "HooksMCP": {
-    "command": "uvx",
-    "args": [
-      "hooks-mcp",
-      "--working-directory",
-      "."
-    ]
-  }
-}
 ```
 
 ## Security Features
