@@ -1,6 +1,6 @@
 [project]
 name = "hooks-mcp"
-version = "0.2.1"
+version = "0.2.2"
 description = "MCP server that exposes project-specific development tools (tests, linters, etc.) and prompts via YAML configuration"
 authors = [
     { name = "Steve Cosman" }
