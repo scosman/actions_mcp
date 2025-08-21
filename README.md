@@ -231,6 +231,7 @@ uvx hooks-mcp
 
 Optional command line arguments include:
  - `--working-directory`/`-wd`: Typically the path to your project root. Set if not running from project root.
+ - `--disable-prompt-tool`: Disable the `get_prompt` tool entirely, similar to setting `get_prompt_tool_filter` to an empty array.
  - The last argument is the path to the `hooks_mcp.yaml` file, if not using the default `./hooks_mcp.yaml`
 
 ### Running with Coding Assistants

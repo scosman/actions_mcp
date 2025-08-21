@@ -60,12 +60,15 @@ def create_prompt_definitions(config: HooksMCPConfig) -> List[Prompt]:
     return prompts
 
 
-def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
+def create_tool_definitions(
+    config: HooksMCPConfig, disable_prompt_tool: bool = False
+) -> List[Tool]:
     """
     Create MCP tool definitions from the HooksMCP configuration.
 
     Args:
         config: The HooksMCP configuration
+        disable_prompt_tool: If True, don't expose the get_prompt tool
 
     Returns:
         List of MCP Tool definitions
@@ -105,7 +108,7 @@ def create_tool_definitions(config: HooksMCPConfig) -> List[Tool]:
         tools.append(tool)
 
     # Add get_prompt tool if there are prompts and it should be exposed
-    if config.prompts:
+    if config.prompts and not disable_prompt_tool:
         # Determine which prompts to expose based on get_prompt_tool_filter
         exposed_prompts = config.prompts
         if config.get_prompt_tool_filter is not None:
@@ -178,7 +181,11 @@ def get_prompt_content(config_prompt: ConfigPrompt, config_path: Path) -> str:
         )
 
 
-async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
+async def serve(
+    hooks_mcp_config: HooksMCPConfig,
+    config_path: Path,
+    disable_prompt_tool: bool = False,
+) -> None:
     """
     Run the HooksMCP server.
 
@@ -186,7 +193,7 @@ async def serve(hooks_mcp_config: HooksMCPConfig, config_path: Path) -> None:
         hooks_mcp_config: The HooksMCP configuration
     """
     # Create tool definitions
-    tools = create_tool_definitions(hooks_mcp_config)
+    tools = create_tool_definitions(hooks_mcp_config, disable_prompt_tool)
 
     # Create prompt definitions
     prompts = create_prompt_definitions(hooks_mcp_config)
@@ -315,6 +322,11 @@ def main() -> None:
         "--working-directory",
         help="Working directory to use for the server (default: current directory)",
     )
+    parser.add_argument(
+        "--disable-prompt-tool",
+        action="store_true",
+        help="Disable the get_prompt tool entirely, similar to setting get_prompt_tool_filter to an empty array",
+    )
 
     args = parser.parse_args()
 
@@ -360,7 +372,7 @@ def main() -> None:
     try:
         import asyncio
 
-        asyncio.run(serve(config, config_path))
+        asyncio.run(serve(config, config_path, args.disable_prompt_tool))
     except KeyboardInterrupt:
         print("HooksMCP server stopped by user")
         sys.exit(0)
