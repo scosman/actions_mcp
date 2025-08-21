@@ -154,7 +154,7 @@ Each parameter in an action's `parameters` array can have the following fields:
 
 #### project_file_path
 
-This parameter type ensures security by validating that path parameter is within the project boundaries:
+This parameter type ensures security by validating that the path parameter is within the project boundaries:
 
 ```yaml
 - name: "test_file"
@@ -183,13 +183,13 @@ Allows any string input from the agent without validation. Use with caution:
 
 #### required_env_var
 
-This is a tool paremeter expected to exist as an environment variable. The server will fail to start if the environment is missing this var. 
+This is a tool parameter expected to exist as an environment variable. The server will fail to start if the environment is missing this var.
 
-This is useful for sepcifing that a secret (eg API key) is needed, without checking the value into your repository. Typically setup when you configure your MCP server (in `mcp.json` and similar). When trying to set up the MCP server, it will output a user friendly message informing the user they need to add the env var to continue.
+This is useful for specifying that a secret (e.g., API key) is needed, without checking the value into your repository. Typically set up when you configure your MCP server (in `mcp.json` and similar). When trying to set up the MCP server, it will output a user‑friendly message informing the user they need to add the env var to continue.
 
 HooksMCP will load env vars from the environment, and any set in a `.env` file in your working directory.
 
-This can not be passed by the calling model.
+This cannot be passed by the calling model.
 
 ```yaml
 - name: "deploy"
@@ -217,7 +217,7 @@ Similar to `required_env_var` but optional. The server will not error on startup
 
 ### Prompt Fields
 
-HooksMCP can be used to share prompts. For example a "test_guide" prompt explaning preferred test libraries and best practices for tests.
+HooksMCP can be used to share prompts. For example, a "test_guide" prompt explaining preferred test libraries and best practices for tests.
 
 Each prompt in the `prompts` array can have the following fields:
 
@@ -258,7 +258,7 @@ prompts:
 
 #### How Prompts are Exposed via MCP
 
-The MCP protocol supports prompts natively and HooksMCP will provide prompts through the offical protocol.
+The MCP protocol supports prompts natively; HooksMCP will provide prompts through the official protocol.
 
 However, many clients only support MCP for tool calls. They either completely ignore prompts, or only expose prompts via a dropdown requiring manual human selection. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name. **Note**: the get_prompt tool does not support argument substitution. The model will have to infer how to use the prompt from it's template.
 
