@@ -235,6 +235,8 @@ Each argument in a prompt's `arguments` array can have the following fields:
 - `description` (optional): description of the argument
 - `required` (optional): Boolean indicating if the argument is required (default: false)
 
+To add a prompt in your template, include it in double curly brackets: `{{CODE_SNIPPET}}`
+
 #### Prompt Examples
 
 Prompts can be defined inline or loaded from files:
@@ -258,7 +260,7 @@ prompts:
 
 The MCP protocol supports prompts natively and HooksMCP will provide prompts through the offical protocol.
 
-However, many clients only support MCP for tool calls. They either completely ignore prompts, or only expose prompts via a dropdown requiring manual human selection. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name.
+However, many clients only support MCP for tool calls. They either completely ignore prompts, or only expose prompts via a dropdown requiring manual human selection. For these clients, we also expose a MCP tool called `get_prompt`. This tool automatically enabled when prompts are defined, allowing coding agents to retrieve prompt content by name. **Note**: the get_prompt tool does not support argument substitution. The model will have to infer how to use the prompt from it's template.
 
 To disable the `get_prompt` tool you can set:
 1. Use the `--disable-prompt-tool` CLI argument. This is local to each user.
