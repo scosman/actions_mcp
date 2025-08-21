@@ -4,6 +4,14 @@ prompts:
   - name: "test_guide.md"
     description: "Guide for testing best practices in this library"
     prompt-file: "agents/test_guide.md"
+    
+  - name: "code_analysis"
+    description: "Analyze code quality"
+    prompt: "Please analyze the following code:\n{{CODE_SNIPPET}}\nProvide feedback."
+    arguments:
+      - name: "CODE_SNIPPET"
+        description: "Code snippet to analyze"
+        required: true
 
 actions:
   - name: "all_tests"
