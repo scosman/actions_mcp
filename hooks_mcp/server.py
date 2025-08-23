@@ -397,6 +397,13 @@ def main() -> None:
         print(str(e))
         sys.exit(1)
 
+    # Load .env file if it exists
+    env_path = config_path.parent / ".env"
+    if env_path.exists():
+        from dotenv import load_dotenv
+
+        load_dotenv(env_path)
+
     # Validate required environment variables
     missing_vars = config.validate_required_env_vars()
     if missing_vars:
@@ -405,13 +412,6 @@ def main() -> None:
         )
         print("Please set these variables before running the server.")
         sys.exit(1)
-
-    # Load .env file if it exists
-    env_path = config_path.parent / ".env"
-    if env_path.exists():
-        from dotenv import load_dotenv
-
-        load_dotenv(env_path)
 
     # Run the server
     try:
