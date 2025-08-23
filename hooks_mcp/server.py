@@ -169,8 +169,7 @@ def get_prompt_content(config_prompt: ConfigPrompt, config_path: Path) -> str:
     elif config_prompt.prompt_file:
         prompt_file_path = config_path.parent / config_prompt.prompt_file
         try:
-            with open(prompt_file_path, "r") as f:
-                return f.read()
+            return prompt_file_path.read_text(encoding="utf-8")
         except Exception as e:
             raise ExecutionError(
                 f"HooksMCP Error: Failed to read prompt file '{config_prompt.prompt_file}': {str(e)}"
